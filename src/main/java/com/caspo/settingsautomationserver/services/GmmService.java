@@ -7,6 +7,7 @@ import com.caspo.settingsautomationserver.dto.GmmMtsgpBaseRequestDto;
 import com.caspo.settingsautomationserver.enums.SportId;
 import com.caspo.settingsautomationserver.kafka.KProducer;
 import com.caspo.settingsautomationserver.models.ChildEvent;
+import com.caspo.settingsautomationserver.models.GmmKafkaLogMessage;
 import com.caspo.settingsautomationserver.utils.DateUtil;
 import com.caspo.settingsautomationserver.utils.ParserUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -160,20 +161,24 @@ public class GmmService {
 
     private void sendLogToKafka(String[] response, String request, String eventId) {
         if (!response[0].equals("")) {
-            JSONObject kafkaLog = new JSONObject();
-            String gmmid = eventId;
-            kafkaLog.put("gmmid", Integer.valueOf(gmmid));
-            kafkaLog.put("send_time", Long.valueOf(response[3]));
-            kafkaLog.put("response_time", Long.valueOf(response[4]));
-            kafkaLog.put("response_code", response[0].trim());
-            kafkaLog.put("response", response[1].trim());
-            kafkaLog.put("message", request);
-            kafkaLog.put("url", response[2]);
-            kafkaLog.put("appname", "ta-esports-setting-automation");
-            kafkaLog.put("log_time", DateUtil.formatDate(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"));
-
-            System.out.println("sending to kafka");
-            kproducer.sendToKafka(kafkaLog.toString());
+            try {
+                GmmKafkaLogMessage kafkaLog = new GmmKafkaLogMessage();
+                String gmmid = eventId;
+                kafkaLog.setGmmid(Integer.valueOf(gmmid));
+                kafkaLog.setSend_time(Long.valueOf(response[3]));
+                kafkaLog.setResponse_time(Long.valueOf(response[4]));
+                kafkaLog.setResponse_code(response[0].trim());
+                kafkaLog.setResponse(response[1].trim());
+                kafkaLog.setMessage(request);
+                kafkaLog.setUrl(response[2]);
+                kafkaLog.setAppname("ta-esports-setting-automation");
+                kafkaLog.setLog_time(DateUtil.formatDate(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"));
+                
+                System.out.println("sending to kafka");
+                kproducer.sendToKafka(objectMapper.writeValueAsString(kafkaLog));
+            } catch (JsonProcessingException ex) {
+                Logger.getLogger(GmmService.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 }
