@@ -1,11 +1,13 @@
 package com.caspo.settingsautomationserver.connector;
 
 import java.util.TreeMap;
+import org.springframework.stereotype.Component;
 
 /**
  *
  * @author 01PH1694.Lorenzo.L
  */
+@Component
 public class TokenUtil {
 
     public final static TreeMap<String, String> encrypt = new TreeMap<>();

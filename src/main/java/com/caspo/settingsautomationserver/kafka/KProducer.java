@@ -1,11 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.caspo.settingsautomationserver.kafka;
 
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.stereotype.Component;
@@ -35,8 +32,8 @@ public class KProducer {
         try {
             producer.send(new ProducerRecord(topicName, messageStr));
             System.out.println("Kafka:\t" + messageStr);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            Logger.getLogger(KProducer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

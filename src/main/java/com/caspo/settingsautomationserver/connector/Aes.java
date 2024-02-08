@@ -14,11 +14,13 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.stereotype.Service;
 
 /**
  *
  * @author 01PH1694.Lorenzo.L
  */
+@Service
 public class Aes {
 
     private final String characterEncoding = "UTF-8";

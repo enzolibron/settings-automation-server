@@ -2,7 +2,6 @@ package com.caspo.settingsautomationserver.dto;
 
 import lombok.AccessLevel;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -29,7 +29,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class GmmConnector {
 
-    Aes aes = new Aes();
+    private final Aes aes;
+    
+    public GmmConnector(Aes aes){
+        this.aes = aes;
+    }
 
     SimpleDateFormat sd = new SimpleDateFormat("yyMMddHHmmss");
 

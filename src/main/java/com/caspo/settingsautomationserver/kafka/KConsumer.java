@@ -17,17 +17,17 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.json.simple.JSONObject;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /**
  *
  * @author 01PH1694.Lorenzo.L
  */
-@Component
+@Service
 public class KConsumer {
 
-    final JsonMapper jsonMapper = new JsonMapper();
-    final XmlMapper xmlMapper = new XmlMapper();
+    final JsonMapper jsonMapper;
+    final XmlMapper xmlMapper;
     final Properties props;
     final String topicName = "sbk-ec-mapping";
 
@@ -36,6 +36,8 @@ public class KConsumer {
     public KConsumer() {
 
         this.props = new Properties();
+        this.jsonMapper = new JsonMapper();
+        this.xmlMapper = new XmlMapper();
         this.props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 BOOTSTRAP_SERVERS_UAT);
         this.props.put(ConsumerConfig.GROUP_ID_CONFIG, "ta-consumer-" + topicName + "-" + new Random().nextInt());
@@ -44,9 +46,7 @@ public class KConsumer {
         this.props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
                 StringDeserializer.class.getName());
         this.props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-
         this.jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
-
     }
 
     public void startConsumer() {
@@ -57,12 +57,12 @@ public class KConsumer {
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(5000);
                 System.out.println("listening for updates in " + this.topicName);
-                System.out.println(EventStorage.getInstance().getEvents().size());
+                System.out.println("EventStorage Size: " + EventStorage.getInstance().getEvents().size());
 
                 for (ConsumerRecord<String, String> record : records) {
                     try {
                         Event newEvent = processRecord(record);
-//                    System.out.println(newEvent.toString());
+                        System.out.println("Newly Added Event: " + newEvent.toString());
 
                     } catch (JsonProcessingException ex) {
                         Logger.getLogger(KConsumer.class.getName()).log(Level.SEVERE, null, ex);
@@ -80,26 +80,25 @@ public class KConsumer {
         JSONObject json = xmlMapper.readValue(record.value(), JSONObject.class);
         Event event = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), Event.class);
         JSONObject jsonObject = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), JSONObject.class);
-        System.err.println(jsonObject);
-//        if (jsonObject.containsKey("eventid")) {
-//            //if record has eventid it is a new match, if not is an update record
-//            //add new event in EventStorage
-//            event.setEcEventID(jsonObject.get("eventid").toString());
-//            EventStorage.getInstance().add(event);
-//            return event;
-//        } else {
-//            //if update event scheduled
-//            Event eventFromList = EventStorage.getInstance().getEvents().stream()
-//                    .filter(item -> item.getEcEventID().equalsIgnoreCase(event.getEcEventID()))
-//                    .findFirst()
-//                    .orElse(null);
-//
-//            int eventIndex = EventStorage.getInstance().getIndex(eventFromList);
-//            eventFromList.setEventDate(event.getEventDate());
-//            EventStorage.getInstance().updateEvent(eventIndex, eventFromList);
-//            return eventFromList;
-//        }
-        return null;
+        if (jsonObject.containsKey("eventid")) {
+            //if record has eventid it is a new match, if not is an update record
+            //add new event in EventStorage
+            event.setEcEventID(jsonObject.get("eventid").toString());
+            EventStorage.getInstance().add(event);
+            return event;
+        } else {
+            //if update event scheduled
+            Event eventFromList = EventStorage.getInstance().getEvents().stream()
+                    .filter(item -> item.getEcEventID().equalsIgnoreCase(event.getEcEventID()))
+                    .findFirst()
+                    .orElse(null);
+
+            int eventIndex = EventStorage.getInstance().getIndex(eventFromList);
+            eventFromList.setEventDate(event.getEventDate());
+            EventStorage.getInstance().updateEvent(eventIndex, eventFromList);
+            return eventFromList;
+        }
+
     }
 
 }

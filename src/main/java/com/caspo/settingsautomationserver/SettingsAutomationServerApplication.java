@@ -26,6 +26,9 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
     @Autowired
     private GetEsportEvents getEsportEvents;
 
+    @Autowired
+    private KConsumer kConsumer;
+
     public static void main(String[] args) {
         SpringApplication.run(SettingsAutomationServerApplication.class, args);
 
@@ -45,12 +48,8 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
             eventList.stream().forEach(event -> {
                 if (event.getIsRB().equalsIgnoreCase("0") || event.getIsRB().equalsIgnoreCase("No")) {
 
-                    try {
-                        eventSettingService.setNewMatchSetting(event);
-                        eventSettingService.setScheduledTask(event);
-                    } catch (IllegalStateException ex) {
-                        Logger.getLogger(SettingsAutomationServerApplication.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    eventSettingService.setNewMatchSetting(event);
+                    eventSettingService.setScheduledTask(event);
 
                 }
 
@@ -60,9 +59,7 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
         } catch (IOException ex) {
             Logger.getLogger(SettingsAutomationServerApplication.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        new KConsumer().startConsumer();
-
+        kConsumer.startConsumer();
     }
 
 }

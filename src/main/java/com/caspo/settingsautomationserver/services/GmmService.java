@@ -1,6 +1,5 @@
 package com.caspo.settingsautomationserver.services;
 
-
 import com.caspo.settingsautomationserver.connector.GmmConnector;
 import com.caspo.settingsautomationserver.dto.GmmBaseRequestDto;
 import com.caspo.settingsautomationserver.dto.GmmMarginBaseRequestDto;
@@ -30,15 +29,16 @@ import org.springframework.stereotype.Service;
 public class GmmService {
 
     private final GmmConnector gmmConnector;
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final JSONParser jsonParser = new JSONParser();
+    private final ObjectMapper objectMapper;
+    private final JSONParser jsonParser;
     private final KProducer kproducer;
 
     private GmmService(GmmConnector gmmConnector, KProducer kproducer) {
         this.gmmConnector = gmmConnector;
         this.kproducer = kproducer;
+        objectMapper = new ObjectMapper();
+        jsonParser = new JSONParser();
     }
-    
 
     public String[] setEventByMtsgp(Integer eventId, String mtsgpName) {
         try {
