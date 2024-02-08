@@ -14,9 +14,9 @@ public interface Dao<T> {
 
     List<T> getAll();
 
-    void save(T t);
+    T save(T t);
 
     T update(T t, Object param);
 
-    void delete(Object id);
+    String delete(Object id);
 }

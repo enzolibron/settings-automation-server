@@ -36,8 +36,8 @@ public class CompetitionGroupSettingDao implements Dao<CompetitionGroupSetting> 
     }
 
     @Override
-    public void save(CompetitionGroupSetting t) {
-        competitionGroupSettingRepository.save(t);
+    public CompetitionGroupSetting save(CompetitionGroupSetting t) {
+        return competitionGroupSettingRepository.save(t);
     }
 
     @Override
@@ -68,8 +68,15 @@ public class CompetitionGroupSettingDao implements Dao<CompetitionGroupSetting> 
     }
 
     @Override
-    public void delete(Object id) {
-        competitionGroupSettingRepository.deleteById((String) id);
+    public String delete(Object name) {
+        CompetitionGroupSetting existing = get(name);
+        if (existing == null) {
+            return null;
+        } else {
+            competitionGroupSettingRepository.delete(existing);
+            return "Deleted successfully.";
+        }
+
     }
 
 }

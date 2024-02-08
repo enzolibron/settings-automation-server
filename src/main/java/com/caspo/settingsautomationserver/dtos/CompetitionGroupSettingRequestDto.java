@@ -10,6 +10,7 @@ import lombok.Data;
  */
 @Data
 public class CompetitionGroupSettingRequestDto implements Dto<CompetitionGroupSetting> {
+    private String name;
     private String straight;
     private Integer today;
     private String propositionToday;
@@ -19,6 +20,7 @@ public class CompetitionGroupSettingRequestDto implements Dto<CompetitionGroupSe
     public CompetitionGroupSetting dtoToEntity() {
         CompetitionGroupSetting entity = new CompetitionGroupSetting();
         
+        entity.setName(this.name);
         entity.setPropositionToday(this.getPropositionToday());
         entity.setStraight(this.getStraight());
         entity.setStraightToday(this.getStraightToday());
