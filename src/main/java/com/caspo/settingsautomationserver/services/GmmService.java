@@ -1,9 +1,9 @@
 package com.caspo.settingsautomationserver.services;
 
-import com.caspo.settingsautomationserver.connector.GmmConnector;
-import com.caspo.settingsautomationserver.dto.GmmBaseRequestDto;
-import com.caspo.settingsautomationserver.dto.GmmMarginBaseRequestDto;
-import com.caspo.settingsautomationserver.dto.GmmMtsgpBaseRequestDto;
+import com.caspo.settingsautomationserver.gmm.GmmConnector;
+import com.caspo.settingsautomationserver.dtos.GmmBaseRequestDto;
+import com.caspo.settingsautomationserver.dtos.GmmMarginBaseRequestDto;
+import com.caspo.settingsautomationserver.dtos.GmmMtsgpBaseRequestDto;
 import com.caspo.settingsautomationserver.enums.SportId;
 import com.caspo.settingsautomationserver.kafka.KProducer;
 import com.caspo.settingsautomationserver.models.ChildEvent;

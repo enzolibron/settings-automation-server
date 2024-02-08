@@ -1,4 +1,4 @@
-package com.caspo.settingsautomationserver.connector;
+package com.caspo.settingsautomationserver.gmm;
 
 /**
  *

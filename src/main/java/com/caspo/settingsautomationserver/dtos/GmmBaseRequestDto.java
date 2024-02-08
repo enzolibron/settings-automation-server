@@ -1,4 +1,4 @@
-package com.caspo.settingsautomationserver.dto;
+package com.caspo.settingsautomationserver.dtos;
 
 import lombok.AccessLevel;
 import lombok.Data;
