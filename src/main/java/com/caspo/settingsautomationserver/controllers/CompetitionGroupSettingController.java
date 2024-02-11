@@ -35,7 +35,7 @@ public class CompetitionGroupSettingController {
         if (result != null) {
             return new ResponseEntity(result, HttpStatus.CREATED);
         } else {
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -51,7 +51,7 @@ public class CompetitionGroupSettingController {
         CompetitionGroupSetting result = competitionGroupSettingDao.get(name);
 
         if (result != null) {
-            return new ResponseEntity(competitionGroupSettingDao.get(name), HttpStatus.OK);
+            return new ResponseEntity(result, HttpStatus.OK);
         } else {
             return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
