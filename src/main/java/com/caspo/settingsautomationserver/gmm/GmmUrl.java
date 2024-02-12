@@ -8,10 +8,10 @@ public enum GmmUrl {
     UAT("http://spi-gmmpub.188.uat/api"),
     PROD("http://gmm-spi-sbk-ext.sbk808.prod/api");
     
-    public final String url;
+    public final String URL;
     
     private GmmUrl(String url) {
-        this.url = url;
+        this.URL = url;
     }
     
 }

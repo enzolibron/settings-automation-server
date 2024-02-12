@@ -1,5 +1,6 @@
 package com.caspo.settingsautomationserver.services;
 
+import com.caspo.settingsautomationserver.dtos.EventBetholdRequestDto;
 import com.caspo.settingsautomationserver.gmm.GmmConnector;
 import com.caspo.settingsautomationserver.dtos.GmmBaseRequestDto;
 import com.caspo.settingsautomationserver.dtos.GmmMarginBaseRequestDto;
@@ -45,7 +46,7 @@ public class GmmService {
         try {
             GmmMtsgpBaseRequestDto mtsgpByEventRequestDto = new GmmMtsgpBaseRequestDto();
             mtsgpByEventRequestDto.setEventId(eventId);
-            mtsgpByEventRequestDto.setSportId(SportId.ESPORT.id);
+            mtsgpByEventRequestDto.setSportId(SportId.ESPORT.ID);
             mtsgpByEventRequestDto.setIsActive(1);
             mtsgpByEventRequestDto.setMtsgpName(mtsgpName);
 
@@ -64,7 +65,7 @@ public class GmmService {
         try {
             GmmMtsgpBaseRequestDto mtsgpByEventRequestDto = new GmmMtsgpBaseRequestDto();
             mtsgpByEventRequestDto.setEventId(eventId);
-            mtsgpByEventRequestDto.setSportId(SportId.ESPORT.id);
+            mtsgpByEventRequestDto.setSportId(SportId.ESPORT.ID);
             mtsgpByEventRequestDto.setIsActive(1);
             mtsgpByEventRequestDto.setMtsgpName(mtsgpName);
             mtsgpByEventRequestDto.setMtsgName(mtsgName);
@@ -86,7 +87,7 @@ public class GmmService {
             setMarginRequestDto.setMarketLineName(marketLineName);
             setMarginRequestDto.setMarketTypeId(marketTypeId);
             setMarginRequestDto.setProfitMargin(profitMargin);
-            setMarginRequestDto.setSportId(SportId.ESPORT.id);
+            setMarginRequestDto.setSportId(SportId.ESPORT.ID);
 
             String[] response = gmmConnector.setMarginByMarketLineName(objectMapper.writeValueAsString(setMarginRequestDto));
             sendLogToKafka(response, objectMapper.writeValueAsString(setMarginRequestDto), setMarginRequestDto.getEventId().toString());
@@ -103,7 +104,7 @@ public class GmmService {
             setMarginRequestDto.setEventId(Integer.valueOf(eventId));
             setMarginRequestDto.setMarketTypeId(marketTypeId);
             setMarginRequestDto.setProfitMargin(profitMargin);
-            setMarginRequestDto.setSportId(SportId.ESPORT.id);
+            setMarginRequestDto.setSportId(SportId.ESPORT.ID);
 
             String[] response = gmmConnector.setMarginByMarketType(objectMapper.writeValueAsString(setMarginRequestDto));
             sendLogToKafka(response, objectMapper.writeValueAsString(setMarginRequestDto), setMarginRequestDto.getEventId().toString());
@@ -114,11 +115,25 @@ public class GmmService {
         }
     }
 
+    public String[] setEventBetHold(EventBetholdRequestDto request) {
+        try {
+   
+
+            String[] response = gmmConnector.setEventBetHold(objectMapper.writeValueAsString(request));
+            sendLogToKafka(response, objectMapper.writeValueAsString(request), request.getEventid().toString());
+            return response;
+        } catch (JsonProcessingException ex) {
+            Logger.getLogger(GmmService.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+
+    }
+
     public String[] getPropositions(String eventId) {
         try {
             GmmBaseRequestDto request = new GmmBaseRequestDto();
             request.setEventid(Integer.valueOf(eventId));
-            request.setSportId(SportId.ESPORT.id);
+            request.setSportId(SportId.ESPORT.ID);
             String[] response = gmmConnector.getPropositions(objectMapper.writeValueAsString(request));
             sendLogToKafka(response, objectMapper.writeValueAsString(request), request.getEventid().toString());
             return response;
@@ -132,7 +147,7 @@ public class GmmService {
         try {
             GmmBaseRequestDto request = new GmmBaseRequestDto();
             request.setEventid(Integer.valueOf(eventId));
-            request.setSportId(SportId.ESPORT.id);
+            request.setSportId(SportId.ESPORT.ID);
             String[] response = gmmConnector.getOrgSpread(objectMapper.writeValueAsString(request));
             sendLogToKafka(response, request.toString(), eventId);
             return response;
@@ -173,7 +188,7 @@ public class GmmService {
                 kafkaLog.setUrl(response[2]);
                 kafkaLog.setAppname("ta-esports-setting-automation");
                 kafkaLog.setLog_time(DateUtil.formatDate(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"));
-                
+
                 System.out.println("sending to kafka");
                 kproducer.sendToKafka(objectMapper.writeValueAsString(kafkaLog));
             } catch (JsonProcessingException ex) {

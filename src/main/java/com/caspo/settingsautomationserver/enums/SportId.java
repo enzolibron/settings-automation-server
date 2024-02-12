@@ -7,9 +7,9 @@ package com.caspo.settingsautomationserver.enums;
 public enum SportId {
     ESPORT(23);
 
-    public final int id;
+    public final int ID;
 
     private SportId(int id) {
-        this.id = id;
+        this.ID = id;
     }
 }

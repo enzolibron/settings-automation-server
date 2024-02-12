@@ -27,4 +27,10 @@ public class CompetitionGroupSetting {
 
     @Column(name = "straight_today")
     private String straightToday;
+
+    @Column(name = "bethold_amount")
+    private Integer betholdAmount;
+
+    @Column(name = "bethold_duration")
+    private Integer betholdDuration;
 }

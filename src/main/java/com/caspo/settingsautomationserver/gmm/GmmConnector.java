@@ -40,13 +40,11 @@ public class GmmConnector {
     private final String KEY = "Sportsbook";
     private final String IV = "1234567890ABCDEF";
     private final String USER = "User1";
-    private final String GMMURL = GmmUrl.UAT.url;
+    private final String GMMURL = GmmUrl.UAT.URL;
 
     private String[] send(String json, String u) {
 
         try {
-//            System.out.println("json:\t" + json);
-
             HttpPost httppost = new HttpPost(u);
             httppost.setHeader(new BasicHeader("Authorization-UserCode", USER));
             httppost.setHeader(new BasicHeader("Authorization-Token", getAuthToken()));
@@ -62,7 +60,6 @@ public class GmmConnector {
             final Long responseTime = System.currentTimeMillis();
             HttpEntity entity = response.getEntity();
             String content = EntityUtils.toString(entity);
-//            System.out.println("res:\t" + response.getStatusLine());
             return new String[]{response.getStatusLine() + "", content, u, sendTime.toString(), responseTime.toString()};
 
         } catch (UnsupportedEncodingException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException ex) {
