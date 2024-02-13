@@ -62,15 +62,20 @@ public class EventSettingService {
                 System.out.println(new Date() + " running kickoffTimeMinusTodaytask for event: " + event.getEcEventID());
                 setMtsgpByMtsgforToday(event, competitionGroupSetting);
                 setMarginByMarketType(event);
-                setMarginByMarketLineName(event.getEcEventID());
+                setMarginByMarketLineName(event);
             };
 
             //schedule task for kickoff
             Runnable kickoffTask = () -> {
-                System.out.println(new Date() + " running kickoffTask for event: " + event.getEcEventID());
-                setEventBetHold(event, competitionGroupSetting);
-                setMarginByMarketType(event);
-                setMarginByMarketLineName(event.getEcEventID());
+                try {
+                    System.out.println(new Date() + " running kickoffTask for event: " + event.getEcEventID());
+                    TimeUnit.SECONDS.sleep(10);
+                    setEventBetHold(event, competitionGroupSetting);
+                    setMarginByMarketType(event);
+//                    setMarginByMarketLineName(event);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
+                }
             };
 
             //compute period
@@ -89,7 +94,7 @@ public class EventSettingService {
 
             gmmService.setEventByMtsgp(Integer.valueOf(event.getEcEventID()), competitionGroupSetting.getStraight());
             setMarginByMarketType(event);
-            setMarginByMarketLineName(event.getEcEventID());
+            setMarginByMarketLineName(event);
 
             event.getSetting().setNewMatchSettingComplete(Boolean.TRUE);
         }
@@ -146,7 +151,7 @@ public class EventSettingService {
         }
     }
 
-    private void getPropositionsAndSetMargin(String eventId) {
+    private void getPropositionsAndSetMargin(String eventId, Boolean isEventStarted) {
         try {
 
             String[] propositions = gmmService.getPropositions(eventId);
@@ -160,12 +165,10 @@ public class EventSettingService {
                 for (Object item : propsJsonArray) {
                     JSONObject jsonObject = (JSONObject) item;
 
-                    if (jsonObject.get("isRB").toString().equalsIgnoreCase("1")) {
+                    if (isEventStarted) {
                         gmmService.setMarginByMarketLineName(Integer.valueOf(eventId), jsonObject.get("propositionName").toString(), 671, 1.02d);
-
-                    } else if (jsonObject.get("isRB").toString().equalsIgnoreCase("2")) {
+                    } else {
                         gmmService.setMarginByMarketLineName(Integer.valueOf(eventId), jsonObject.get("propositionName").toString(), 670, 1.03d);
-
                     }
                 }
             }
@@ -176,19 +179,19 @@ public class EventSettingService {
         }
     }
 
-    private void setMarginByMarketLineName(String eventId) {
-        List<ChildEvent> childEvent = gmmService.getChildEvent(eventId);
+    private void setMarginByMarketLineName(Event event) {
+        List<ChildEvent> childEvent = gmmService.getChildEvent(event.getEcEventID());
 
         //get eventIDs
         List<Integer> eventIds = childEvent.stream()
                 .map(item -> item.getEventID()).collect(Collectors.toList());
 
         //get parent event propositions and set margin
-        getPropositionsAndSetMargin(eventId);
+        getPropositionsAndSetMargin(event.getEcEventID(), EventSettingService.computeKickoffPeriod(event.getEventDate()) > 0L);
 
         //get child event propositions and set margin
         eventIds.stream().forEach(childEventId -> {
-            getPropositionsAndSetMargin(childEventId.toString());
+            getPropositionsAndSetMargin(childEventId.toString(), EventSettingService.computeKickoffPeriod(event.getEventDate()) > 0L);
         });
 
     }
@@ -242,13 +245,12 @@ public class EventSettingService {
                 for (Object item : marketLines) {
                     JSONObject betTypeJsonObject = (JSONObject) item;
 
-                    BetType betType = betTypeRepository.getOne((Long) betTypeJsonObject.get("bettypeId"));
+                    Optional<BetType> betType = betTypeRepository.findById((Long) betTypeJsonObject.get("bettypeId"));
 
-                    //TODO: getting of profit margin, 
-                    if (betTypeJsonObject.get("isRB").toString().equalsIgnoreCase("1")) {
-                        gmmService.setMarginByMarketType(event.getEcEventID(), Integer.parseInt(betType.getMarketTypeId()), 1.01);
-                    } else if (betTypeJsonObject.get("isRB").toString().equalsIgnoreCase("2")) {
-                        gmmService.setMarginByMarketType(event.getEcEventID(), Integer.parseInt(betType.getMarketTypeId()), 1.02);
+                    if (betType.isPresent()) {
+                        gmmService.setMarginByMarketType(event.getEcEventID(), Integer.parseInt(betType.get().getMarketTypeId()), 1.02);
+                    } else {
+                        Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "bet type: {0} not found", betTypeJsonObject.get("bettypeId"));
                     }
 
                 }
