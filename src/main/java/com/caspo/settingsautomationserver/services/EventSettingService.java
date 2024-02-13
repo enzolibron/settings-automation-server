@@ -71,12 +71,11 @@ public class EventSettingService {
                 setEventBetHold(event, competitionGroupSetting);
                 setMarginByMarketType(event);
                 setMarginByMarketLineName(event.getEcEventID());
-
             };
 
             //compute period
-            Long kickoffTimeMinusTodayTaskPeriod = computeKickoffMinusTodayPeriod(event, settingToday);
-            Long kickoffTimeTaskPeriod = computeKickoffPeriod(event);
+            Long kickoffTimeMinusTodayTaskPeriod = computeKickoffMinusTodayPeriod(event.getEventDate(), settingToday);
+            Long kickoffTimeTaskPeriod = computeKickoffPeriod(event.getEventDate());
             scheduler.schedule(kickoffTimeMinusTodaytask, kickoffTimeMinusTodayTaskPeriod, TimeUnit.MILLISECONDS);
             scheduler.schedule(kickoffTask, kickoffTimeTaskPeriod, TimeUnit.MILLISECONDS);
         }
@@ -113,11 +112,11 @@ public class EventSettingService {
 
     }
 
-    private Long computeKickoffMinusTodayPeriod(Event event, Integer settingToday) {
+    private Long computeKickoffMinusTodayPeriod(String eventDate, Integer settingToday) {
         try {
             long currentTimeMillis = System.currentTimeMillis();
 
-            Date eventDateTime = dateFormat.parse(event.getEventDate());
+            Date eventDateTime = dateFormat.parse(eventDate);
             //convert to ph time
             eventDateTime = DateUtil.add12HoursToDate(eventDateTime);
             eventDateTime = DateUtil.minusHoursToDate(eventDateTime, settingToday);
@@ -130,11 +129,11 @@ public class EventSettingService {
         }
     }
 
-    public static Long computeKickoffPeriod(Event event) {
+    public static Long computeKickoffPeriod(String eventDate) {
         try {
             long currentTimeMillis = System.currentTimeMillis();
 
-            Date eventDateTime = dateFormat.parse(event.getEventDate());
+            Date eventDateTime = dateFormat.parse(eventDate);
             //convert to ph time
             eventDateTime = DateUtil.add12HoursToDate(eventDateTime);
 

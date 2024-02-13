@@ -1,5 +1,6 @@
 package com.caspo.settingsautomationserver.ec;
 
+import com.caspo.settingsautomationserver.models.EcPushFeedEventDto;
 import com.caspo.settingsautomationserver.models.Event;
 import com.caspo.settingsautomationserver.services.EventSettingService;
 import java.io.IOException;
@@ -31,8 +32,6 @@ public class GetEsportEvents {
 
     JSONParser parser = new JSONParser();
 
-    ;
-    
     public List<Event> connect() throws IOException {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         List<Event> eventList = null;
@@ -75,8 +74,9 @@ public class GetEsportEvents {
         List<Event> eventList = new ArrayList();
         for (Object item : result) {
             JSONObject jsonObject = (JSONObject) item;
-
-            if (!jsonObject.get("gmmID").toString().isEmpty()) {
+            
+            //add to list if event has gmmID and hasn't started
+            if (!jsonObject.get("gmmID").toString().isEmpty() && EventSettingService.computeKickoffPeriod(jsonObject.get("eventDate").toString()) > 0L) {
                 Event newEvent = new Event();
                 newEvent.setEcEventID(jsonObject.get("gmmID").toString());
                 newEvent.setEventDate(jsonObject.get("eventDate").toString());
@@ -84,13 +84,9 @@ public class GetEsportEvents {
                 newEvent.setCompetitionId(jsonObject.get("gmmCompetitionID").toString());
                 newEvent.setCompetitionName(jsonObject.get("gmmCompetition").toString());
 
-                if (EventSettingService.computeKickoffPeriod(newEvent) > 0L) {
-                    System.out.println(newEvent);
-                    eventList.add(newEvent);
-                }
-
+                System.out.println(newEvent);
+                eventList.add(newEvent);
             }
-
         }
 
         return eventList;
