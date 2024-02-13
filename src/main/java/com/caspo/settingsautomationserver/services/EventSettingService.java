@@ -14,6 +14,7 @@ import com.caspo.settingsautomationserver.utils.DateUtil;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +40,7 @@ public class EventSettingService {
     private final BetTypeRepository betTypeRepository;
     private final GmmService gmmService;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+    private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     private EventSettingService(CompetitionGroupSettingRepository competitionGroupSettingRepository, CompetitionRepository competitionRepository, GmmService gmmService, BetTypeRepository betTypeRepository) {
         this.competitionGroupSettingRepository = competitionGroupSettingRepository;
@@ -97,12 +98,16 @@ public class EventSettingService {
     }
 
     private CompetitionGroupSetting getCompetitionSettingByCompetitionId(Long id) {
-        try {
-            Competition competition = competitionRepository.getOne(id);
-            CompetitionGroupSetting setting = competitionGroupSettingRepository.getOne(competition.getSettings());
-            return setting;
-        } catch (NullPointerException ex) {
-            Logger.getLogger(EventSettingService.class.getName()).log(Level.WARNING, "No competition: " + id + " found. Return empty setting.", ex);
+
+        Optional<Competition> competition = competitionRepository.findById(id);
+        if (competition.isPresent()) {
+            Optional<CompetitionGroupSetting> setting = competitionGroupSettingRepository.findById(competition.get().getSettings());
+            if (setting.isPresent()) {
+                return setting.get();
+            } else {
+                return null;
+            }
+        } else {
             return null;
         }
 
@@ -116,7 +121,6 @@ public class EventSettingService {
             //convert to ph time
             eventDateTime = DateUtil.add12HoursToDate(eventDateTime);
             eventDateTime = DateUtil.minusHoursToDate(eventDateTime, settingToday);
-            System.out.println(eventDateTime);
 
             return eventDateTime.getTime() - currentTimeMillis;
 
@@ -126,15 +130,15 @@ public class EventSettingService {
         }
     }
 
-    private Long computeKickoffPeriod(Event event) {
+    public static Long computeKickoffPeriod(Event event) {
         try {
             long currentTimeMillis = System.currentTimeMillis();
 
             Date eventDateTime = dateFormat.parse(event.getEventDate());
             //convert to ph time
             eventDateTime = DateUtil.add12HoursToDate(eventDateTime);
-            System.out.println(eventDateTime);
 
+            System.out.println(eventDateTime.getTime() - currentTimeMillis);
             return eventDateTime.getTime() - currentTimeMillis;
 
         } catch (java.text.ParseException ex) {
@@ -257,7 +261,7 @@ public class EventSettingService {
     }
 
     private void setEventBetHold(Event event, CompetitionGroupSetting competitionGroupSetting) {
-        
+
         EventBetholdRequestDto request = new EventBetholdRequestDto();
         request.setEventid(Integer.valueOf(event.getEcEventID()));
         request.setHoldAmount(competitionGroupSetting.getBetholdAmount());

@@ -1,6 +1,7 @@
 package com.caspo.settingsautomationserver.kafka;
 
 import com.caspo.settingsautomationserver.EventStorage;
+import com.caspo.settingsautomationserver.models.EcPushFeedEventDto;
 import com.caspo.settingsautomationserver.models.Event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -78,27 +79,32 @@ public class KConsumer {
     private Event processRecord(ConsumerRecord<String, String> record) throws JsonProcessingException {
 
         JSONObject json = xmlMapper.readValue(record.value(), JSONObject.class);
-        Event event = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), Event.class);
-        JSONObject jsonObject = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), JSONObject.class);
-        if (jsonObject.containsKey("eventid")) {
+        EcPushFeedEventDto ecPushFeedEventDto = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), EcPushFeedEventDto.class);
+        System.out.println(ecPushFeedEventDto);
+        Event event = new Event();
+
+        if (ecPushFeedEventDto.getEventid() != null) {
             //if record has eventid it is a new match, if not is an update record
             //add new event in EventStorage
-            event.setEcEventID(jsonObject.get("eventid").toString());
+            event.setEcEventID(ecPushFeedEventDto.getEventid());
+            event.setEventDate(ecPushFeedEventDto.getEventDate());
+            event.setIsRB(ecPushFeedEventDto.getIsRB());
+            event.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
+            event.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
             EventStorage.getInstance().add(event);
             return event;
         } else {
             //if update event scheduled
             Event eventFromList = EventStorage.getInstance().getEvents().stream()
-                    .filter(item -> item.getEcEventID().equalsIgnoreCase(event.getEcEventID()))
+                    .filter(item -> item.getEcEventID().equalsIgnoreCase(ecPushFeedEventDto.getEcEventID()))
                     .findFirst()
                     .orElse(null);
 
             int eventIndex = EventStorage.getInstance().getIndex(eventFromList);
-            eventFromList.setEventDate(event.getEventDate());
+            eventFromList.setEventDate(ecPushFeedEventDto.getEventDate());
             EventStorage.getInstance().updateEvent(eventIndex, eventFromList);
             return eventFromList;
         }
-
     }
 
 }

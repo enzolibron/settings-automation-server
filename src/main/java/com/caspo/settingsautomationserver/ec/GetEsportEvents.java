@@ -1,6 +1,7 @@
 package com.caspo.settingsautomationserver.ec;
 
 import com.caspo.settingsautomationserver.models.Event;
+import com.caspo.settingsautomationserver.services.EventSettingService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,9 @@ public class GetEsportEvents {
     private final int SPORTID = 23;
     private final String GMMURL = EcUrl.UAT.url;
 
-    JSONParser parser = new JSONParser();;
+    JSONParser parser = new JSONParser();
+
+    ;
     
     public List<Event> connect() throws IOException {
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -73,15 +76,21 @@ public class GetEsportEvents {
         for (Object item : result) {
             JSONObject jsonObject = (JSONObject) item;
 
-            if (!jsonObject.get("gmmID").toString().isEmpty() && jsonObject.get("isRB").toString().equalsIgnoreCase("No")) {
+            if (!jsonObject.get("gmmID").toString().isEmpty()) {
                 Event newEvent = new Event();
                 newEvent.setEcEventID(jsonObject.get("gmmID").toString());
                 newEvent.setEventDate(jsonObject.get("eventDate").toString());
                 newEvent.setIsRB(jsonObject.get("isRB").toString());
                 newEvent.setCompetitionId(jsonObject.get("gmmCompetitionID").toString());
                 newEvent.setCompetitionName(jsonObject.get("gmmCompetition").toString());
-                eventList.add(newEvent);
+
+                if (EventSettingService.computeKickoffPeriod(newEvent) > 0L) {
+                    System.out.println(newEvent);
+                    eventList.add(newEvent);
+                }
+
             }
+
         }
 
         return eventList;

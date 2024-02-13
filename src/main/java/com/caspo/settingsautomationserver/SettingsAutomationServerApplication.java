@@ -46,19 +46,18 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
                 TimeUnit.SECONDS.sleep(5);
             }
             eventList.stream().forEach(event -> {
-                if (event.getIsRB().equalsIgnoreCase("0") || event.getIsRB().equalsIgnoreCase("No")) {
 
-                    eventSettingService.setNewMatchSetting(event);
-                    eventSettingService.setScheduledTask(event);
-
-                }
+                eventSettingService.setNewMatchSetting(event);
+                eventSettingService.setScheduledTask(event);
 
             });
 
             EventStorage.getInstance().addAll(eventList);
+
         } catch (IOException ex) {
             Logger.getLogger(SettingsAutomationServerApplication.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         kConsumer.startConsumer();
     }
 
