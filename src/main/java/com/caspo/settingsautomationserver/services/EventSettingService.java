@@ -72,7 +72,7 @@ public class EventSettingService {
                     TimeUnit.SECONDS.sleep(10);
                     setEventBetHold(event, competitionGroupSetting);
                     setMarginByMarketType(event);
-//                    setMarginByMarketLineName(event);
+                    setMarginByMarketLineName(event);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
                 }
