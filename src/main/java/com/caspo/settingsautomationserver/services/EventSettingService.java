@@ -1,5 +1,6 @@
 package com.caspo.settingsautomationserver.services;
 
+import com.caspo.settingsautomationserver.EventStorage;
 import com.caspo.settingsautomationserver.dtos.EventBetholdRequestDto;
 import com.caspo.settingsautomationserver.enums.SportId;
 import com.caspo.settingsautomationserver.models.BetType;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,7 +41,8 @@ public class EventSettingService {
     private final CompetitionRepository competitionRepository;
     private final BetTypeRepository betTypeRepository;
     private final GmmService gmmService;
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     private EventSettingService(CompetitionGroupSettingRepository competitionGroupSettingRepository, CompetitionRepository competitionRepository, GmmService gmmService, BetTypeRepository betTypeRepository) {
@@ -49,7 +52,7 @@ public class EventSettingService {
         this.gmmService = gmmService;
     }
 
-    public void setScheduledTask(Event event) {
+    public Event setScheduledTask(Event event) {
 
         CompetitionGroupSetting competitionGroupSetting = getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
 
@@ -81,9 +84,16 @@ public class EventSettingService {
             //compute period
             Long kickoffTimeMinusTodayTaskPeriod = computeKickoffMinusTodayPeriod(event.getEventDate(), settingToday);
             Long kickoffTimeTaskPeriod = computeKickoffPeriod(event.getEventDate());
-            scheduler.schedule(kickoffTimeMinusTodaytask, kickoffTimeMinusTodayTaskPeriod, TimeUnit.MILLISECONDS);
-            scheduler.schedule(kickoffTask, kickoffTimeTaskPeriod, TimeUnit.MILLISECONDS);
+
+            ScheduledFuture<?> kickoffTimeMinusTodayScheduledTask = scheduler.schedule(kickoffTimeMinusTodaytask, kickoffTimeMinusTodayTaskPeriod, TimeUnit.MILLISECONDS);
+            ScheduledFuture<?> kickoffTimeTaskScheduledTask = scheduler.schedule(kickoffTask, kickoffTimeTaskPeriod, TimeUnit.MILLISECONDS);
+
+            event.setKickoffTimeMinusTodayScheduledTask(kickoffTimeMinusTodayScheduledTask);
+            event.setKickoffTimeScheduledTask(kickoffTimeTaskScheduledTask);
+
         }
+
+        return event;
 
     }
 
@@ -101,7 +111,7 @@ public class EventSettingService {
 
     }
 
-    private CompetitionGroupSetting getCompetitionSettingByCompetitionId(Long id) {
+    public CompetitionGroupSetting getCompetitionSettingByCompetitionId(Long id) {
 
         Optional<Competition> competition = competitionRepository.findById(id);
         if (competition.isPresent()) {

@@ -46,9 +46,12 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
                 TimeUnit.SECONDS.sleep(5);
             }
             eventList.stream().forEach(event -> {
-
+     
                 eventSettingService.setNewMatchSetting(event);
-                eventSettingService.setScheduledTask(event);
+                event = eventSettingService.setScheduledTask(event);
+
+     
+                System.out.println(event);
 
             });
 

@@ -1,5 +1,6 @@
 package com.caspo.settingsautomationserver.ec;
 
+import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.EcPushFeedEventDto;
 import com.caspo.settingsautomationserver.models.Event;
 import com.caspo.settingsautomationserver.services.EventSettingService;
@@ -18,6 +19,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,6 +31,9 @@ public class GetEsportEvents {
 
     private final int SPORTID = 23;
     private final String GMMURL = EcUrl.UAT.url;
+
+    @Autowired
+    private EventSettingService eventSettingService;
 
     JSONParser parser = new JSONParser();
 
@@ -74,18 +79,23 @@ public class GetEsportEvents {
         List<Event> eventList = new ArrayList();
         for (Object item : result) {
             JSONObject jsonObject = (JSONObject) item;
-            
+
             //add to list if event has gmmID and hasn't started
             if (!jsonObject.get("gmmID").toString().isEmpty() && EventSettingService.computeKickoffPeriod(jsonObject.get("eventDate").toString()) > 0L) {
                 Event newEvent = new Event();
                 newEvent.setEcEventID(jsonObject.get("gmmID").toString());
-                newEvent.setEventDate(jsonObject.get("eventDate").toString());
+                newEvent.setEventDate(jsonObject.get("eventDate").toString().replaceAll("/", "-"));
                 newEvent.setIsRB(jsonObject.get("isRB").toString());
                 newEvent.setCompetitionId(jsonObject.get("gmmCompetitionID").toString());
                 newEvent.setCompetitionName(jsonObject.get("gmmCompetition").toString());
 
-                System.out.println(newEvent);
-                eventList.add(newEvent);
+                
+                CompetitionGroupSetting competitionGroupSetting = eventSettingService.getCompetitionSettingByCompetitionId(Long.valueOf(newEvent.getCompetitionId()));
+                
+                if (competitionGroupSetting != null) {
+                    eventList.add(newEvent);
+                }
+
             }
         }
 

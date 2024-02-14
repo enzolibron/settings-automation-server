@@ -3,6 +3,8 @@ package com.caspo.settingsautomationserver.kafka;
 import com.caspo.settingsautomationserver.EventStorage;
 import com.caspo.settingsautomationserver.models.EcPushFeedEventDto;
 import com.caspo.settingsautomationserver.models.Event;
+import com.caspo.settingsautomationserver.services.EventSettingService;
+import static com.caspo.settingsautomationserver.utils.DateUtil.formatDateFromKafkaPushFeed;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -18,6 +20,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -31,6 +34,9 @@ public class KConsumer {
     final XmlMapper xmlMapper;
     final Properties props;
     final String topicName = "sbk-ec-mapping";
+
+    @Autowired
+    private EventSettingService eventSettingService;
 
     private final static String BOOTSTRAP_SERVERS_UAT = "10.12.8.146:9092,10.12.8.147:9092,10.12.8.148:9092";
 
@@ -62,8 +68,8 @@ public class KConsumer {
 
                 for (ConsumerRecord<String, String> record : records) {
                     try {
-                        Event newEvent = processRecord(record);
-                        System.out.println("Newly Added Event: " + newEvent.toString());
+                        Event newEventPush = processRecord(record);
+                        System.out.println("Newly Added Event: " + newEventPush.toString());
 
                     } catch (JsonProcessingException ex) {
                         Logger.getLogger(KConsumer.class.getName()).log(Level.SEVERE, null, ex);
@@ -87,11 +93,16 @@ public class KConsumer {
             //if record has eventid it is a new match, if not is an update record
             //add new event in EventStorage
             event.setEcEventID(ecPushFeedEventDto.getEventid());
-            event.setEventDate(ecPushFeedEventDto.getEventDate());
+            event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
             event.setIsRB(ecPushFeedEventDto.getIsRB());
             event.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
             event.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
+
+            eventSettingService.setNewMatchSetting(event);
+            event = eventSettingService.setScheduledTask(event);
+            
             EventStorage.getInstance().add(event);
+
             return event;
         } else {
             //if update event scheduled
@@ -101,8 +112,19 @@ public class KConsumer {
                     .orElse(null);
 
             int eventIndex = EventStorage.getInstance().getIndex(eventFromList);
-            eventFromList.setEventDate(ecPushFeedEventDto.getEventDate());
+            
+//            cancel previous scheduled task
+            eventFromList.getKickoffTimeMinusTodayScheduledTask().cancel(false);
+            eventFromList.getKickoffTimeScheduledTask().cancel(false);
+
+            //update and save
+            eventFromList.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
+
+            //set new scheduled task
+            eventFromList = eventSettingService.setScheduledTask(eventFromList);
+
             EventStorage.getInstance().updateEvent(eventIndex, eventFromList);
+
             return eventFromList;
         }
     }

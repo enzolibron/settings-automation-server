@@ -31,7 +31,7 @@ public class KProducer {
     public void sendToKafka(String messageStr) {
         try {
             producer.send(new ProducerRecord(topicName, messageStr));
-            System.out.println("Kafka:\t" + messageStr);
+//            System.out.println("Kafka:\t" + messageStr);
         } catch (Exception ex) {
             Logger.getLogger(KProducer.class.getName()).log(Level.SEVERE, null, ex);
         }

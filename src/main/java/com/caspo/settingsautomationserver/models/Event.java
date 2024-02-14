@@ -1,6 +1,7 @@
 package com.caspo.settingsautomationserver.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.concurrent.ScheduledFuture;
 import lombok.Data;
 
 /**
@@ -21,5 +22,7 @@ public class Event {
     private String competitionId;
     private String competitionName;
     private Setting setting;
+    private ScheduledFuture<?> kickoffTimeMinusTodayScheduledTask;
+    private ScheduledFuture<?> kickoffTimeScheduledTask;
 
 }
