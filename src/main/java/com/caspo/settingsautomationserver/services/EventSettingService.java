@@ -53,16 +53,15 @@ public class EventSettingService {
     }
 
     public Event setScheduledTask(Event event) {
-
+                
         CompetitionGroupSetting competitionGroupSetting = getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
 
         if (competitionGroupSetting != null) {
-//            System.out.println(event);
             Integer settingToday = competitionGroupSetting.getToday();
 
             //schedule task for kickoff time - today
             Runnable kickoffTimeMinusTodaytask = () -> {
-                System.out.println(new Date() + " running kickoffTimeMinusTodaytask for event: " + event.getEcEventID());
+                System.out.println(new Date() + ": Running kickoffTimeMinusTodaytask for event: " + event.getEcEventID());
                 setMtsgpByMtsgforToday(event, competitionGroupSetting);
                 setMarginByMarketType(event);
                 setMarginByMarketLineName(event);
@@ -71,7 +70,7 @@ public class EventSettingService {
             //schedule task for kickoff
             Runnable kickoffTask = () -> {
                 try {
-                    System.out.println(new Date() + " running kickoffTask for event: " + event.getEcEventID());
+                    System.out.println(new Date() + ": Running kickoffTask for event: " + event.getEcEventID());
                     TimeUnit.SECONDS.sleep(10);
                     setEventBetHold(event, competitionGroupSetting);
                     setMarginByMarketType(event);
@@ -92,7 +91,7 @@ public class EventSettingService {
             event.setKickoffTimeScheduledTask(kickoffTimeTaskScheduledTask);
 
         }
-
+        
         return event;
 
     }
@@ -152,7 +151,6 @@ public class EventSettingService {
             //convert to ph time
             eventDateTime = DateUtil.add12HoursToDate(eventDateTime);
 
-            System.out.println(eventDateTime.getTime() - currentTimeMillis);
             return eventDateTime.getTime() - currentTimeMillis;
 
         } catch (java.text.ParseException ex) {
@@ -207,7 +205,6 @@ public class EventSettingService {
     }
 
     private void setMtsgpByMtsgforToday(Event event, CompetitionGroupSetting competitionGroupSetting) {
-        System.out.println(event);
         //setMtsgpByMtsg for mtsgName STRAIGHT
         gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEcEventID()), competitionGroupSetting.getStraightToday(), "Straight");
 

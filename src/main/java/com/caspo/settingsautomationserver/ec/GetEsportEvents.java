@@ -53,7 +53,7 @@ public class GetEsportEvents {
                     //to catch error 1002 
                     JSONObject result = (JSONObject) parser.parse(entityString);
                     if (Integer.parseInt(result.get("error code").toString()) == 1002) {
-                        System.out.println("GetEsportEvents: error 1002 from ec, request limit exceeded");
+                        Logger.getLogger(GetEsportEvents.class.getName()).log(Level.INFO, "GetEsportEvents: error 1002 from ec, request limit exceeded");
                     }
                     return null;
                 } catch (ClassCastException e) {

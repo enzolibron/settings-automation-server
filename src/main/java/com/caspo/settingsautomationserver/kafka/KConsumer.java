@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 import java.util.logging.Level;
@@ -63,13 +64,13 @@ public class KConsumer {
 
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(5000);
-                System.out.println("listening for updates in " + this.topicName);
+                System.out.println(new Date() + ": listening for updates in " + this.topicName);
                 System.out.println("EventStorage Size: " + EventStorage.getInstance().getEvents().size());
 
                 for (ConsumerRecord<String, String> record : records) {
                     try {
                         Event newEventPush = processRecord(record);
-                        System.out.println("Newly Added Event: " + newEventPush.toString());
+                        System.out.println(new Date() + "New kafka record: " + newEventPush.toString());
 
                     } catch (JsonProcessingException ex) {
                         Logger.getLogger(KConsumer.class.getName()).log(Level.SEVERE, null, ex);
@@ -86,7 +87,6 @@ public class KConsumer {
 
         JSONObject json = xmlMapper.readValue(record.value(), JSONObject.class);
         EcPushFeedEventDto ecPushFeedEventDto = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), EcPushFeedEventDto.class);
-        System.out.println(ecPushFeedEventDto);
         Event event = new Event();
 
         if (ecPushFeedEventDto.getEventid() != null) {

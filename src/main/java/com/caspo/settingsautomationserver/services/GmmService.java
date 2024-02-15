@@ -189,7 +189,6 @@ public class GmmService {
                 kafkaLog.setAppname("ta-esports-setting-automation");
                 kafkaLog.setLog_time(DateUtil.formatDate(new Date(), "yyyy-MM-dd HH:mm:ss.SSS"));
 
-                System.out.println("sending to kafka");
                 kproducer.sendToKafka(objectMapper.writeValueAsString(kafkaLog));
             } catch (JsonProcessingException ex) {
                 Logger.getLogger(GmmService.class.getName()).log(Level.SEVERE, null, ex);
