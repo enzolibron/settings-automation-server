@@ -18,7 +18,7 @@ public class EventStorage {
         events = new ArrayList();
     }
 
-    public static synchronized EventStorage getInstance() {
+    public static synchronized EventStorage get() {
         if (eventStorage_instance == null) {
             eventStorage_instance = new EventStorage();
         }

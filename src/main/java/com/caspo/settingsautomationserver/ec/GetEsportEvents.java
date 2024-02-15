@@ -37,11 +37,12 @@ public class GetEsportEvents {
 
     JSONParser parser = new JSONParser();
 
-    public List<Event> connect() throws IOException {
-        CloseableHttpClient httpClient = HttpClients.createDefault();
+    public List<Event> getEvents() throws IOException {
+
         List<Event> eventList = null;
 
         HttpGet request = new HttpGet(GMMURL + SPORTID);
+        CloseableHttpClient httpClient = HttpClients.createDefault();
         CloseableHttpResponse response = httpClient.execute(request);
 
         try {
@@ -89,9 +90,8 @@ public class GetEsportEvents {
                 newEvent.setCompetitionId(jsonObject.get("gmmCompetitionID").toString());
                 newEvent.setCompetitionName(jsonObject.get("gmmCompetition").toString());
 
-                
                 CompetitionGroupSetting competitionGroupSetting = eventSettingService.getCompetitionSettingByCompetitionId(Long.valueOf(newEvent.getCompetitionId()));
-                
+
                 if (competitionGroupSetting != null) {
                     eventList.add(newEvent);
                 }

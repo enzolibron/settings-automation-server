@@ -65,12 +65,12 @@ public class KConsumer {
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(5000);
                 System.out.println(new Date() + ": listening for updates in " + this.topicName);
-                System.out.println("EventStorage Size: " + EventStorage.getInstance().getEvents().size());
+                System.out.println("EventStorage Size: " + EventStorage.get().getEvents().size());
 
                 for (ConsumerRecord<String, String> record : records) {
                     try {
                         Event newEventPush = processRecord(record);
-                        System.out.println(new Date() + "New kafka record: " + newEventPush.toString());
+//                        System.out.println(new Date() + "New kafka record: " + newEventPush.toString());
 
                     } catch (JsonProcessingException ex) {
                         Logger.getLogger(KConsumer.class.getName()).log(Level.SEVERE, null, ex);
@@ -87,45 +87,55 @@ public class KConsumer {
 
         JSONObject json = xmlMapper.readValue(record.value(), JSONObject.class);
         EcPushFeedEventDto ecPushFeedEventDto = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), EcPushFeedEventDto.class);
-        Event event = new Event();
 
         if (ecPushFeedEventDto.getEventid() != null) {
+            Event newEvent = new Event();
             //if record has eventid it is a new match, if not is an update record
-            //add new event in EventStorage
-            event.setEcEventID(ecPushFeedEventDto.getEventid());
-            event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
-            event.setIsRB(ecPushFeedEventDto.getIsRB());
-            event.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
-            event.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
+            //add new newEvent in EventStorage
+            newEvent.setEcEventID(ecPushFeedEventDto.getEventid());
+            newEvent.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
+            newEvent.setIsRB(ecPushFeedEventDto.getIsRB());
+            newEvent.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
+            newEvent.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
 
-            eventSettingService.setNewMatchSetting(event);
-            event = eventSettingService.setScheduledTask(event);
-            
-            EventStorage.getInstance().add(event);
+            newEvent.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(newEvent));
 
-            return event;
+            System.out.println(new Date() + "New kafka record: " + newEvent.toString());
+            System.out.println("IS EVENT RB: " + eventSettingService.isEventRB(newEvent));
+            if (!eventSettingService.isEventRB(newEvent)) {
+                eventSettingService.setNewMatchSetting(newEvent);
+                newEvent.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(newEvent));
+            }
+
+            EventStorage.get().add(newEvent);
+
+            return newEvent;
         } else {
-            //if update event scheduled
-            Event eventFromList = EventStorage.getInstance().getEvents().stream()
+            //if update newEvent scheduled
+            Event existingEvent = EventStorage.get().getEvents().stream()
                     .filter(item -> item.getEcEventID().equalsIgnoreCase(ecPushFeedEventDto.getEcEventID()))
                     .findFirst()
                     .orElse(null);
 
-            int eventIndex = EventStorage.getInstance().getIndex(eventFromList);
-            
-//            cancel previous scheduled task
-            eventFromList.getKickoffTimeMinusTodayScheduledTask().cancel(false);
-            eventFromList.getKickoffTimeScheduledTask().cancel(false);
+            int eventIndex = EventStorage.get().getIndex(existingEvent);
+
+            //cancel previous scheduled task
+            existingEvent.getKickoffTimeMinusTodayScheduledTask().cancel(false);
+            existingEvent.getKickoffTimeScheduledTask().cancel(false);
 
             //update and save
-            eventFromList.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
+            existingEvent.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
 
             //set new scheduled task
-            eventFromList = eventSettingService.setScheduledTask(eventFromList);
+            existingEvent.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(existingEvent));
 
-            EventStorage.getInstance().updateEvent(eventIndex, eventFromList);
+            if (!eventSettingService.isEventRB(existingEvent)) {
+                existingEvent.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(existingEvent));
+            }
 
-            return eventFromList;
+            EventStorage.get().updateEvent(eventIndex, existingEvent);
+
+            return existingEvent;
         }
     }
 

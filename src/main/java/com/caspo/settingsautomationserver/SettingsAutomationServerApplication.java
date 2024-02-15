@@ -42,17 +42,17 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
 
             while (eventList == null) {
                 System.out.println(new Date() + " retrying to retrieve events... ");
-                eventList = getEsportEvents.connect();
+                eventList = getEsportEvents.getEvents();
                 TimeUnit.SECONDS.sleep(5);
             }
             eventList.stream().forEach(event -> {
-     
+                System.out.println(event);
                 eventSettingService.setNewMatchSetting(event);
-                eventSettingService.setScheduledTask(event);
-
+                event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
+                event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
             });
 
-            EventStorage.getInstance().addAll(eventList);
+            EventStorage.get().addAll(eventList);
 
         } catch (IOException ex) {
             Logger.getLogger(SettingsAutomationServerApplication.class.getName()).log(Level.SEVERE, null, ex);

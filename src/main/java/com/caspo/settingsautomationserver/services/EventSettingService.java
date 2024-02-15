@@ -1,6 +1,5 @@
 package com.caspo.settingsautomationserver.services;
 
-import com.caspo.settingsautomationserver.EventStorage;
 import com.caspo.settingsautomationserver.dtos.EventBetholdRequestDto;
 import com.caspo.settingsautomationserver.enums.SportId;
 import com.caspo.settingsautomationserver.models.BetType;
@@ -51,9 +50,10 @@ public class EventSettingService {
         this.betTypeRepository = betTypeRepository;
         this.gmmService = gmmService;
     }
-
+    
+    @Deprecated
     public Event setScheduledTask(Event event) {
-                
+
         CompetitionGroupSetting competitionGroupSetting = getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
 
         if (competitionGroupSetting != null) {
@@ -91,9 +91,61 @@ public class EventSettingService {
             event.setKickoffTimeScheduledTask(kickoffTimeTaskScheduledTask);
 
         }
-        
+
         return event;
 
+    }
+
+    public ScheduledFuture<?> setKickoffTimeMinusTodayScheduledTask(Event event) {
+        CompetitionGroupSetting competitionGroupSetting = getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
+
+        if (competitionGroupSetting != null) {
+            Integer settingToday = competitionGroupSetting.getToday();
+
+            //schedule task for kickoff time - today
+            Runnable kickoffTimeMinusTodaytask = () -> {
+                System.out.println(new Date() + ": Running kickoffTimeMinusTodaytask for event: " + event.getEcEventID());
+                setMtsgpByMtsgforToday(event, competitionGroupSetting);
+                setMarginByMarketType(event);
+                setMarginByMarketLineName(event);
+            };
+
+            //compute period
+            Long kickoffTimeMinusTodayTaskPeriod = computeKickoffMinusTodayPeriod(event.getEventDate(), settingToday);
+
+            ScheduledFuture<?> kickoffTimeMinusTodayScheduledTask = scheduler.schedule(kickoffTimeMinusTodaytask, kickoffTimeMinusTodayTaskPeriod, TimeUnit.MILLISECONDS);
+
+            return kickoffTimeMinusTodayScheduledTask;
+        }
+
+        return null;
+    }
+
+    public ScheduledFuture<?> setKickoffTimeScheduledTask(Event event) {
+        CompetitionGroupSetting competitionGroupSetting = getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
+
+        if (competitionGroupSetting != null) {
+            //schedule task for kickoff
+            Runnable kickoffTask = () -> {
+                try {
+                    System.out.println(new Date() + ": Running kickoffTask for event: " + event.getEcEventID());
+                    TimeUnit.SECONDS.sleep(10);
+                    setEventBetHold(event, competitionGroupSetting);
+                    setMarginByMarketType(event);
+                    setMarginByMarketLineName(event);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            };
+
+            Long kickoffTimeTaskPeriod = computeKickoffPeriod(event.getEventDate());
+
+            ScheduledFuture<?> kickoffTimeTaskScheduledTask = scheduler.schedule(kickoffTask, kickoffTimeTaskPeriod, TimeUnit.MILLISECONDS);
+
+            return kickoffTimeTaskScheduledTask;
+        }
+
+        return null;
     }
 
     public void setNewMatchSetting(Event event) {
@@ -195,11 +247,11 @@ public class EventSettingService {
                 .map(item -> item.getEventID()).collect(Collectors.toList());
 
         //get parent event propositions and set margin
-        getPropositionsAndSetMargin(event.getEcEventID(), EventSettingService.computeKickoffPeriod(event.getEventDate()) > 0L);
+        getPropositionsAndSetMargin(event.getEcEventID(), isEventRB(event));
 
         //get child event propositions and set margin
         eventIds.stream().forEach(childEventId -> {
-            getPropositionsAndSetMargin(childEventId.toString(), EventSettingService.computeKickoffPeriod(event.getEventDate()) > 0L);
+            getPropositionsAndSetMargin(childEventId.toString(), isEventRB(event));
         });
 
     }
@@ -278,6 +330,10 @@ public class EventSettingService {
         request.setSportId(SportId.ESPORT.ID);
         gmmService.setEventBetHold(request);
 
+    }
+
+    public Boolean isEventRB(Event event) {
+        return computeKickoffPeriod(event.getEventDate()) < 0L;
     }
 
 }
