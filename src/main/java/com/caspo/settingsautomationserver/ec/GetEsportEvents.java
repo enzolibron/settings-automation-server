@@ -91,8 +91,8 @@ public class GetEsportEvents {
                 newEvent.setCompetitionName(jsonObject.get("gmmCompetition").toString());
 
                 CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(newEvent.getCompetitionId()));
-
                 if (competitionGroupSetting != null) {
+                    newEvent.setCompetitionGroupSetting(competitionGroupSetting);
                     eventList.add(newEvent);
                 }
 

@@ -24,5 +24,6 @@ public class Event {
     private Setting setting;
     private ScheduledFuture<?> kickoffTimeMinusTodayScheduledTask;
     private ScheduledFuture<?> kickoffTimeScheduledTask;
+    private CompetitionGroupSetting competitionGroupSetting;
 
 }

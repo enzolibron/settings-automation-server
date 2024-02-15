@@ -1,6 +1,5 @@
 package com.caspo.settingsautomationserver.services;
 
-import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
 import com.caspo.settingsautomationserver.dtos.EventBetholdRequestDto;
 import com.caspo.settingsautomationserver.enums.SportId;
 import com.caspo.settingsautomationserver.models.BetType;
@@ -34,85 +33,66 @@ import org.springframework.stereotype.Service;
 public class EventSettingService {
 
     private final JSONParser jsonParser = new JSONParser();
-    private final CompetitionGroupSettingDao competitionGroupSettingDao;
     private final BetTypeRepository betTypeRepository;
     private final GmmService gmmService;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
-    private EventSettingService(GmmService gmmService, BetTypeRepository betTypeRepository, CompetitionGroupSettingDao competitionGroupSettingDao) {
+    private EventSettingService(GmmService gmmService, BetTypeRepository betTypeRepository) {
         this.betTypeRepository = betTypeRepository;
         this.gmmService = gmmService;
-        this.competitionGroupSettingDao = competitionGroupSettingDao;
-    
     }
-            
 
     public void setNewMatchSetting(Event event) {
+        gmmService.setEventByMtsgp(Integer.valueOf(event.getEcEventID()), event.getCompetitionGroupSetting().getStraight());
+        setMarginByMarketType(event);
+        setMarginByMarketLineName(event);
+        event.getSetting().setNewMatchSettingComplete(Boolean.TRUE);
+    }
 
-        CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
-        if (competitionGroupSetting != null) {
+    public ScheduledFuture<?> setKickoffTimeMinusTodayScheduledTask(Event event) {
 
-            gmmService.setEventByMtsgp(Integer.valueOf(event.getEcEventID()), competitionGroupSetting.getStraight());
+        Integer settingToday = event.getCompetitionGroupSetting().getToday();
+
+        //schedule task for kickoff time - today
+        Runnable kickoffTimeMinusTodaytask = () -> {
+            System.out.println(new Date() + ": Running kickoffTimeMinusTodaytask for event: " + event.getEcEventID());
+            setMtsgpByMtsgforToday(event, event.getCompetitionGroupSetting());
             setMarginByMarketType(event);
             setMarginByMarketLineName(event);
+        };
 
-            event.getSetting().setNewMatchSettingComplete(Boolean.TRUE);
-        }
+        //compute period
+        Long kickoffTimeMinusTodayTaskPeriod = computeKickoffMinusTodayPeriod(event.getEventDate(), settingToday);
 
-    }
-    
-    public ScheduledFuture<?> setKickoffTimeMinusTodayScheduledTask(Event event) {
-        CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
+        ScheduledFuture<?> kickoffTimeMinusTodayScheduledTask = scheduler.schedule(kickoffTimeMinusTodaytask, kickoffTimeMinusTodayTaskPeriod, TimeUnit.MILLISECONDS);
 
-        if (competitionGroupSetting != null) {
-            Integer settingToday = competitionGroupSetting.getToday();
+        return kickoffTimeMinusTodayScheduledTask;
 
-            //schedule task for kickoff time - today
-            Runnable kickoffTimeMinusTodaytask = () -> {
-                System.out.println(new Date() + ": Running kickoffTimeMinusTodaytask for event: " + event.getEcEventID());
-                setMtsgpByMtsgforToday(event, competitionGroupSetting);
-                setMarginByMarketType(event);
-                setMarginByMarketLineName(event);
-            };
-
-            //compute period
-            Long kickoffTimeMinusTodayTaskPeriod = computeKickoffMinusTodayPeriod(event.getEventDate(), settingToday);
-
-            ScheduledFuture<?> kickoffTimeMinusTodayScheduledTask = scheduler.schedule(kickoffTimeMinusTodaytask, kickoffTimeMinusTodayTaskPeriod, TimeUnit.MILLISECONDS);
-
-            return kickoffTimeMinusTodayScheduledTask;
-        }
-
-        return null;
     }
 
     public ScheduledFuture<?> setKickoffTimeScheduledTask(Event event) {
-        CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
 
-        if (competitionGroupSetting != null) {
-            //schedule task for kickoff
-            Runnable kickoffTask = () -> {
-                try {
-                    System.out.println(new Date() + ": Running kickoffTask for event: " + event.getEcEventID());
-                    TimeUnit.SECONDS.sleep(10);
-                    setEventBetHold(event, competitionGroupSetting);
-                    setMarginByMarketType(event);
-                    setMarginByMarketLineName(event);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            };
+        //schedule task for kickoff
+        Runnable kickoffTask = () -> {
+            try {
+                System.out.println(new Date() + ": Running kickoffTask for event: " + event.getEcEventID());
+                TimeUnit.SECONDS.sleep(10);
+                setEventBetHold(event, event.getCompetitionGroupSetting());
+                setMarginByMarketType(event);
+                setMarginByMarketLineName(event);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        };
 
-            Long kickoffTimeTaskPeriod = computeKickoffPeriod(event.getEventDate());
+        Long kickoffTimeTaskPeriod = computeKickoffPeriod(event.getEventDate());
 
-            ScheduledFuture<?> kickoffTimeTaskScheduledTask = scheduler.schedule(kickoffTask, kickoffTimeTaskPeriod, TimeUnit.MILLISECONDS);
+        ScheduledFuture<?> kickoffTimeTaskScheduledTask = scheduler.schedule(kickoffTask, kickoffTimeTaskPeriod, TimeUnit.MILLISECONDS);
 
-            return kickoffTimeTaskScheduledTask;
-        }
+        return kickoffTimeTaskScheduledTask;
 
-        return null;
     }
 
     private void getPropositionsAndSetMargin(String eventId, Boolean isEventStarted) {

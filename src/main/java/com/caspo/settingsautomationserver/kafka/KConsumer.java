@@ -1,6 +1,8 @@
 package com.caspo.settingsautomationserver.kafka;
 
 import com.caspo.settingsautomationserver.EventStorage;
+import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
+import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.EcPushFeedEventDto;
 import com.caspo.settingsautomationserver.models.Event;
 import com.caspo.settingsautomationserver.services.EventSettingService;
@@ -39,6 +41,9 @@ public class KConsumer {
     @Autowired
     private EventSettingService eventSettingService;
 
+    @Autowired
+    private CompetitionGroupSettingDao competitionGroupSettingDao;
+
     private final static String BOOTSTRAP_SERVERS_UAT = "10.12.8.146:9092,10.12.8.147:9092,10.12.8.148:9092";
 
     public KConsumer() {
@@ -70,7 +75,7 @@ public class KConsumer {
                 for (ConsumerRecord<String, String> record : records) {
                     try {
                         Event newEventPush = processRecord(record);
-//                        System.out.println(new Date() + "New kafka record: " + newEventPush.toString());
+                        System.out.println(new Date() + "New KConsumer record: " + newEventPush.toString());
 
                     } catch (JsonProcessingException ex) {
                         Logger.getLogger(KConsumer.class.getName()).log(Level.SEVERE, null, ex);
@@ -88,55 +93,57 @@ public class KConsumer {
         JSONObject json = xmlMapper.readValue(record.value(), JSONObject.class);
         EcPushFeedEventDto ecPushFeedEventDto = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), EcPushFeedEventDto.class);
 
+        Event event = null;
+
         if (ecPushFeedEventDto.getEventid() != null) {
-            Event newEvent = new Event();
-            //if record has eventid it is a new match, if not is an update record
-            //add new newEvent in EventStorage
-            newEvent.setEcEventID(ecPushFeedEventDto.getEventid());
-            newEvent.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
-            newEvent.setIsRB(ecPushFeedEventDto.getIsRB());
-            newEvent.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
-            newEvent.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
+            CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(ecPushFeedEventDto.getCompetition().getId()));
+            if (competitionGroupSetting != null) {
+                event = new Event();
+                //if record has eventid it is a new match, if not is an update record
+                //add new newEvent in EventStorage
+                event.setEcEventID(ecPushFeedEventDto.getEventid());
+                event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
+                event.setIsRB(ecPushFeedEventDto.getIsRB());
+                event.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
+                event.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
 
-            newEvent.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(newEvent));
+                event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
 
-            System.out.println(new Date() + "New kafka record: " + newEvent.toString());
-            System.out.println("IS EVENT RB: " + eventSettingService.isEventRB(newEvent));
-            if (!eventSettingService.isEventRB(newEvent)) {
-                eventSettingService.setNewMatchSetting(newEvent);
-                newEvent.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(newEvent));
+                if (!eventSettingService.isEventRB(event)) {
+                    eventSettingService.setNewMatchSetting(event);
+                    event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
+                }
+
+                EventStorage.get().add(event);
             }
 
-            EventStorage.get().add(newEvent);
-
-            return newEvent;
         } else {
             //if update newEvent scheduled
-            Event existingEvent = EventStorage.get().getEvents().stream()
+            event = EventStorage.get().getEvents().stream()
                     .filter(item -> item.getEcEventID().equalsIgnoreCase(ecPushFeedEventDto.getEcEventID()))
                     .findFirst()
                     .orElse(null);
 
-            int eventIndex = EventStorage.get().getIndex(existingEvent);
+            int eventIndex = EventStorage.get().getIndex(event);
 
             //cancel previous scheduled task
-            existingEvent.getKickoffTimeMinusTodayScheduledTask().cancel(false);
-            existingEvent.getKickoffTimeScheduledTask().cancel(false);
+            event.getKickoffTimeMinusTodayScheduledTask().cancel(false);
+            event.getKickoffTimeScheduledTask().cancel(false);
 
             //update and save
-            existingEvent.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
+            event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
 
             //set new scheduled task
-            existingEvent.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(existingEvent));
+            event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
 
-            if (!eventSettingService.isEventRB(existingEvent)) {
-                existingEvent.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(existingEvent));
+            if (!eventSettingService.isEventRB(event)) {
+                event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
             }
 
-            EventStorage.get().updateEvent(eventIndex, existingEvent);
-
-            return existingEvent;
+            EventStorage.get().updateEvent(eventIndex, event);
         }
+
+        return event;
     }
 
 }
