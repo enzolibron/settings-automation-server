@@ -1,9 +1,9 @@
 package com.caspo.settingsautomationserver.ec;
 
+import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
-import com.caspo.settingsautomationserver.models.EcPushFeedEventDto;
 import com.caspo.settingsautomationserver.models.Event;
-import com.caspo.settingsautomationserver.services.EventSettingService;
+import static com.caspo.settingsautomationserver.services.EventSettingService.computeKickoffPeriod;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ public class GetEsportEvents {
     private final String GMMURL = EcUrl.UAT.url;
 
     @Autowired
-    private EventSettingService eventSettingService;
+    private CompetitionGroupSettingDao competitionGroupSettingDao;
 
     JSONParser parser = new JSONParser();
 
@@ -82,7 +82,7 @@ public class GetEsportEvents {
             JSONObject jsonObject = (JSONObject) item;
 
             //add to list if event has gmmID and hasn't started
-            if (!jsonObject.get("gmmID").toString().isEmpty() && EventSettingService.computeKickoffPeriod(jsonObject.get("eventDate").toString()) > 0L) {
+            if (!jsonObject.get("gmmID").toString().isEmpty() && computeKickoffPeriod(jsonObject.get("eventDate").toString()) > 0L) {
                 Event newEvent = new Event();
                 newEvent.setEcEventID(jsonObject.get("gmmID").toString());
                 newEvent.setEventDate(jsonObject.get("eventDate").toString().replaceAll("/", "-"));
@@ -90,7 +90,7 @@ public class GetEsportEvents {
                 newEvent.setCompetitionId(jsonObject.get("gmmCompetitionID").toString());
                 newEvent.setCompetitionName(jsonObject.get("gmmCompetition").toString());
 
-                CompetitionGroupSetting competitionGroupSetting = eventSettingService.getCompetitionSettingByCompetitionId(Long.valueOf(newEvent.getCompetitionId()));
+                CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(newEvent.getCompetitionId()));
 
                 if (competitionGroupSetting != null) {
                     eventList.add(newEvent);

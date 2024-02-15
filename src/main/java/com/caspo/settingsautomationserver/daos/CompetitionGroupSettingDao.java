@@ -1,7 +1,9 @@
 package com.caspo.settingsautomationserver.daos;
 
+import com.caspo.settingsautomationserver.models.Competition;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.repositories.CompetitionGroupSettingRepository;
+import com.caspo.settingsautomationserver.repositories.CompetitionRepository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -14,9 +16,11 @@ import org.springframework.stereotype.Service;
 public class CompetitionGroupSettingDao implements Dao<CompetitionGroupSetting> {
 
     private final CompetitionGroupSettingRepository competitionGroupSettingRepository;
+    private final CompetitionRepository competitionRepository;
 
-    public CompetitionGroupSettingDao(CompetitionGroupSettingRepository competitionGroupSettingRepository) {
+    public CompetitionGroupSettingDao(CompetitionGroupSettingRepository competitionGroupSettingRepository, CompetitionRepository competitionRepository) {
         this.competitionGroupSettingRepository = competitionGroupSettingRepository;
+        this.competitionRepository = competitionRepository;
     }
 
     @Override
@@ -75,6 +79,22 @@ public class CompetitionGroupSettingDao implements Dao<CompetitionGroupSetting> 
         } else {
             competitionGroupSettingRepository.delete(existing);
             return "Deleted successfully.";
+        }
+
+    }
+
+    public CompetitionGroupSetting getCompetitionSettingByCompetitionId(Long id) {
+
+        Optional<Competition> competition = competitionRepository.findById(id);
+        if (competition.isPresent()) {
+            Optional<CompetitionGroupSetting> setting = competitionGroupSettingRepository.findById(competition.get().getSettings());
+            if (setting.isPresent()) {
+                return setting.get();
+            } else {
+                return null;
+            }
+        } else {
+            return null;
         }
 
     }

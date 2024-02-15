@@ -55,7 +55,7 @@ public class GmmService {
             return response;
 
         } catch (JsonProcessingException ex) {
-            Logger.getLogger(EventSettingService.class
+            Logger.getLogger(GmmService.class
                     .getName()).log(Level.SEVERE, null, ex);
             return null;
         }
@@ -74,7 +74,7 @@ public class GmmService {
             return response;
 
         } catch (JsonProcessingException ex) {
-            Logger.getLogger(EventSettingService.class
+            Logger.getLogger(GmmService.class
                     .getName()).log(Level.SEVERE, null, ex);
             return null;
         }
@@ -168,7 +168,7 @@ public class GmmService {
             return childEvents;
 
         } catch (ParseException ex) {
-            Logger.getLogger(EventSettingService.class
+            Logger.getLogger(GmmService.class
                     .getName()).log(Level.SEVERE, null, ex);
             return null;
         }

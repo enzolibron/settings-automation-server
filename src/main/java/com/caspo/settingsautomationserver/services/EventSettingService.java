@@ -1,15 +1,13 @@
 package com.caspo.settingsautomationserver.services;
 
+import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
 import com.caspo.settingsautomationserver.dtos.EventBetholdRequestDto;
 import com.caspo.settingsautomationserver.enums.SportId;
 import com.caspo.settingsautomationserver.models.BetType;
 import com.caspo.settingsautomationserver.models.ChildEvent;
-import com.caspo.settingsautomationserver.models.Competition;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
 import com.caspo.settingsautomationserver.repositories.BetTypeRepository;
-import com.caspo.settingsautomationserver.repositories.CompetitionGroupSettingRepository;
-import com.caspo.settingsautomationserver.repositories.CompetitionRepository;
 import com.caspo.settingsautomationserver.utils.DateUtil;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -36,68 +34,37 @@ import org.springframework.stereotype.Service;
 public class EventSettingService {
 
     private final JSONParser jsonParser = new JSONParser();
-    private final CompetitionGroupSettingRepository competitionGroupSettingRepository;
-    private final CompetitionRepository competitionRepository;
+    private final CompetitionGroupSettingDao competitionGroupSettingDao;
     private final BetTypeRepository betTypeRepository;
     private final GmmService gmmService;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
-    private EventSettingService(CompetitionGroupSettingRepository competitionGroupSettingRepository, CompetitionRepository competitionRepository, GmmService gmmService, BetTypeRepository betTypeRepository) {
-        this.competitionGroupSettingRepository = competitionGroupSettingRepository;
-        this.competitionRepository = competitionRepository;
+    private EventSettingService(GmmService gmmService, BetTypeRepository betTypeRepository, CompetitionGroupSettingDao competitionGroupSettingDao) {
         this.betTypeRepository = betTypeRepository;
         this.gmmService = gmmService;
-    }
+        this.competitionGroupSettingDao = competitionGroupSettingDao;
     
-    @Deprecated
-    public Event setScheduledTask(Event event) {
+    }
+            
 
-        CompetitionGroupSetting competitionGroupSetting = getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
+    public void setNewMatchSetting(Event event) {
 
+        CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
         if (competitionGroupSetting != null) {
-            Integer settingToday = competitionGroupSetting.getToday();
 
-            //schedule task for kickoff time - today
-            Runnable kickoffTimeMinusTodaytask = () -> {
-                System.out.println(new Date() + ": Running kickoffTimeMinusTodaytask for event: " + event.getEcEventID());
-                setMtsgpByMtsgforToday(event, competitionGroupSetting);
-                setMarginByMarketType(event);
-                setMarginByMarketLineName(event);
-            };
+            gmmService.setEventByMtsgp(Integer.valueOf(event.getEcEventID()), competitionGroupSetting.getStraight());
+            setMarginByMarketType(event);
+            setMarginByMarketLineName(event);
 
-            //schedule task for kickoff
-            Runnable kickoffTask = () -> {
-                try {
-                    System.out.println(new Date() + ": Running kickoffTask for event: " + event.getEcEventID());
-                    TimeUnit.SECONDS.sleep(10);
-                    setEventBetHold(event, competitionGroupSetting);
-                    setMarginByMarketType(event);
-                    setMarginByMarketLineName(event);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            };
-
-            //compute period
-            Long kickoffTimeMinusTodayTaskPeriod = computeKickoffMinusTodayPeriod(event.getEventDate(), settingToday);
-            Long kickoffTimeTaskPeriod = computeKickoffPeriod(event.getEventDate());
-
-            ScheduledFuture<?> kickoffTimeMinusTodayScheduledTask = scheduler.schedule(kickoffTimeMinusTodaytask, kickoffTimeMinusTodayTaskPeriod, TimeUnit.MILLISECONDS);
-            ScheduledFuture<?> kickoffTimeTaskScheduledTask = scheduler.schedule(kickoffTask, kickoffTimeTaskPeriod, TimeUnit.MILLISECONDS);
-
-            event.setKickoffTimeMinusTodayScheduledTask(kickoffTimeMinusTodayScheduledTask);
-            event.setKickoffTimeScheduledTask(kickoffTimeTaskScheduledTask);
-
+            event.getSetting().setNewMatchSettingComplete(Boolean.TRUE);
         }
 
-        return event;
-
     }
-
+    
     public ScheduledFuture<?> setKickoffTimeMinusTodayScheduledTask(Event event) {
-        CompetitionGroupSetting competitionGroupSetting = getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
+        CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
 
         if (competitionGroupSetting != null) {
             Integer settingToday = competitionGroupSetting.getToday();
@@ -122,7 +89,7 @@ public class EventSettingService {
     }
 
     public ScheduledFuture<?> setKickoffTimeScheduledTask(Event event) {
-        CompetitionGroupSetting competitionGroupSetting = getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
+        CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
 
         if (competitionGroupSetting != null) {
             //schedule task for kickoff
@@ -146,69 +113,6 @@ public class EventSettingService {
         }
 
         return null;
-    }
-
-    public void setNewMatchSetting(Event event) {
-
-        CompetitionGroupSetting competitionGroupSetting = getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
-        if (competitionGroupSetting != null) {
-
-            gmmService.setEventByMtsgp(Integer.valueOf(event.getEcEventID()), competitionGroupSetting.getStraight());
-            setMarginByMarketType(event);
-            setMarginByMarketLineName(event);
-
-            event.getSetting().setNewMatchSettingComplete(Boolean.TRUE);
-        }
-
-    }
-
-    public CompetitionGroupSetting getCompetitionSettingByCompetitionId(Long id) {
-
-        Optional<Competition> competition = competitionRepository.findById(id);
-        if (competition.isPresent()) {
-            Optional<CompetitionGroupSetting> setting = competitionGroupSettingRepository.findById(competition.get().getSettings());
-            if (setting.isPresent()) {
-                return setting.get();
-            } else {
-                return null;
-            }
-        } else {
-            return null;
-        }
-
-    }
-
-    private Long computeKickoffMinusTodayPeriod(String eventDate, Integer settingToday) {
-        try {
-            long currentTimeMillis = System.currentTimeMillis();
-
-            Date eventDateTime = dateFormat.parse(eventDate);
-            //convert to ph time
-            eventDateTime = DateUtil.add12HoursToDate(eventDateTime);
-            eventDateTime = DateUtil.minusHoursToDate(eventDateTime, settingToday);
-
-            return eventDateTime.getTime() - currentTimeMillis;
-
-        } catch (java.text.ParseException ex) {
-            Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
-    }
-
-    public static Long computeKickoffPeriod(String eventDate) {
-        try {
-            long currentTimeMillis = System.currentTimeMillis();
-
-            Date eventDateTime = dateFormat.parse(eventDate);
-            //convert to ph time
-            eventDateTime = DateUtil.add12HoursToDate(eventDateTime);
-
-            return eventDateTime.getTime() - currentTimeMillis;
-
-        } catch (java.text.ParseException ex) {
-            Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
     }
 
     private void getPropositionsAndSetMargin(String eventId, Boolean isEventStarted) {
@@ -330,6 +234,39 @@ public class EventSettingService {
         request.setSportId(SportId.ESPORT.ID);
         gmmService.setEventBetHold(request);
 
+    }
+
+    private Long computeKickoffMinusTodayPeriod(String eventDate, Integer settingToday) {
+        try {
+            long currentTimeMillis = System.currentTimeMillis();
+
+            Date eventDateTime = dateFormat.parse(eventDate);
+            //convert to ph time
+            eventDateTime = DateUtil.add12HoursToDate(eventDateTime);
+            eventDateTime = DateUtil.minusHoursToDate(eventDateTime, settingToday);
+
+            return eventDateTime.getTime() - currentTimeMillis;
+
+        } catch (java.text.ParseException ex) {
+            Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+
+    public static Long computeKickoffPeriod(String eventDate) {
+        try {
+            long currentTimeMillis = System.currentTimeMillis();
+
+            Date eventDateTime = dateFormat.parse(eventDate);
+            //convert to ph time
+            eventDateTime = DateUtil.add12HoursToDate(eventDateTime);
+
+            return eventDateTime.getTime() - currentTimeMillis;
+
+        } catch (java.text.ParseException ex) {
+            Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
     }
 
     public Boolean isEventRB(Event event) {
