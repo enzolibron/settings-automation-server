@@ -106,6 +106,7 @@ public class KConsumer {
                 event.setIsRB(ecPushFeedEventDto.getIsRB());
                 event.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
                 event.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
+                event.setCompetitionGroupSetting(competitionGroupSetting);
 
                 event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
 

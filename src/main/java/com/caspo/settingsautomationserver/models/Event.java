@@ -12,16 +12,11 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Event {
 
-    public Event() {
-        this.setting = new Setting();
-    }
-
     private String ecEventID;
     private String eventDate;
     private String isRB;
     private String competitionId;
     private String competitionName;
-    private Setting setting;
     private ScheduledFuture<?> kickoffTimeMinusTodayScheduledTask;
     private ScheduledFuture<?> kickoffTimeScheduledTask;
     private CompetitionGroupSetting competitionGroupSetting;

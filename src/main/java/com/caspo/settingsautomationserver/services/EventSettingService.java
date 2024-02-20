@@ -48,7 +48,6 @@ public class EventSettingService {
         gmmService.setEventByMtsgp(Integer.valueOf(event.getEcEventID()), event.getCompetitionGroupSetting().getStraight());
         setMarginByMarketType(event);
         setMarginByMarketLineName(event);
-        event.getSetting().setNewMatchSettingComplete(Boolean.TRUE);
     }
 
     public ScheduledFuture<?> setKickoffTimeMinusTodayScheduledTask(Event event) {

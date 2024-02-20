@@ -1,9 +1,7 @@
 package com.caspo.settingsautomationserver;
 
-import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
 import com.caspo.settingsautomationserver.ec.GetEsportEvents;
 import com.caspo.settingsautomationserver.kafka.KConsumer;
-import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
 import com.caspo.settingsautomationserver.services.EventSettingService;
 import java.io.IOException;
@@ -31,9 +29,6 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
     @Autowired
     private KConsumer kConsumer;
     
-    @Autowired
-    private CompetitionGroupSettingDao competitionGroupSettingDao;
-
     public static void main(String[] args) {
         SpringApplication.run(SettingsAutomationServerApplication.class, args);
 
@@ -51,10 +46,6 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
                 TimeUnit.SECONDS.sleep(5);
             }
             eventList.stream().forEach(event -> {
-                System.out.println(event);
-                CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(event.getCompetitionId()));
-                
-    
                 eventSettingService.setNewMatchSetting(event);
                 event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
                 event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
