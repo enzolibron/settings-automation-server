@@ -20,7 +20,7 @@ public class CompetitionGroupSettingRequestDto implements Dto<CompetitionGroupSe
     public CompetitionGroupSetting dtoToEntity() {
         CompetitionGroupSetting entity = new CompetitionGroupSetting();
         
-        entity.setName(this.name);
+        entity.setName(this.getName());
         entity.setPropositionToday(this.getPropositionToday());
         entity.setStraight(this.getStraight());
         entity.setStraightToday(this.getStraightToday());

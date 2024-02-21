@@ -1,7 +1,6 @@
 package com.caspo.settingsautomationserver.daos;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  *
