@@ -48,7 +48,7 @@ public class KConsumer {
 
     public KConsumer() {
 
-        this.props = new Properties(); 
+        this.props = new Properties();
         this.props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 BOOTSTRAP_SERVERS_UAT);
         this.props.put(ConsumerConfig.GROUP_ID_CONFIG, "ta-consumer-" + topicName + "-" + new Random().nextInt());
@@ -73,7 +73,9 @@ public class KConsumer {
                 for (ConsumerRecord<String, String> record : records) {
                     try {
                         Event newEventPush = processRecord(record);
-                        System.out.println(new Date() + "New KConsumer record: " + newEventPush.toString());
+                        if (newEventPush != null) {
+                            System.out.println(new Date() + "New KConsumer record: " + newEventPush.toString());
+                        }
 
                     } catch (JsonProcessingException ex) {
                         Logger.getLogger(KConsumer.class.getName()).log(Level.SEVERE, null, ex);
