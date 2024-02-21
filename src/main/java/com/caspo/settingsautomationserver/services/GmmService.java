@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -27,20 +28,14 @@ import org.springframework.stereotype.Service;
  *
  * @author 01PH1694.Lorenzo.L
  */
+@RequiredArgsConstructor
 @Service
 public class GmmService {
 
     private final GmmConnector gmmConnector;
-    private final ObjectMapper objectMapper;
-    private final JSONParser jsonParser;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JSONParser jsonParser = new JSONParser();
     private final KProducer kproducer;
-
-    private GmmService(GmmConnector gmmConnector, KProducer kproducer) {
-        this.gmmConnector = gmmConnector;
-        this.kproducer = kproducer;
-        objectMapper = new ObjectMapper();
-        jsonParser = new JSONParser();
-    }
 
     public String[] setEventByMtsgp(Integer eventId, String mtsgpName) {
         try {

@@ -3,6 +3,7 @@ package com.caspo.settingsautomationserver.controllers;
 import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
 import com.caspo.settingsautomationserver.dtos.CompetitionGroupSettingRequestDto;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,15 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * @author 01PH1694.Lorenzo.L
  */
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/competition-group-settings")
 public class CompetitionGroupSettingController {
 
     private final CompetitionGroupSettingDao competitionGroupSettingDao;
-
-    public CompetitionGroupSettingController(CompetitionGroupSettingDao competitionGroupSettingDao) {
-        this.competitionGroupSettingDao = competitionGroupSettingDao;
-    }
 
     @PostMapping
     public ResponseEntity create(@RequestBody CompetitionGroupSettingRequestDto request) {

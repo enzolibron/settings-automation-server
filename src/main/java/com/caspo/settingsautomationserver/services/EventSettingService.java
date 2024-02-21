@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
  *
  * @author 01PH1694.Lorenzo.L
  */
+@RequiredArgsConstructor
 @Service
 public class EventSettingService {
 
@@ -38,11 +40,6 @@ public class EventSettingService {
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-
-    private EventSettingService(GmmService gmmService, BetTypeRepository betTypeRepository) {
-        this.betTypeRepository = betTypeRepository;
-        this.gmmService = gmmService;
-    }
 
     public void setNewMatchSetting(Event event) {
         gmmService.setEventByMtsgp(Integer.valueOf(event.getEcEventID()), event.getCompetitionGroupSetting().getStraight());

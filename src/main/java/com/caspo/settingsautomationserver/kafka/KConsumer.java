@@ -33,10 +33,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class KConsumer {
 
-    final JsonMapper jsonMapper;
-    final XmlMapper xmlMapper;
-    final Properties props;
-    final String topicName = "sbk-ec-mapping";
+    private final JsonMapper jsonMapper = new JsonMapper();
+    private final XmlMapper xmlMapper = new XmlMapper();
+    private final Properties props;
+    private final String topicName = "sbk-ec-mapping";
 
     @Autowired
     private EventSettingService eventSettingService;
@@ -48,9 +48,7 @@ public class KConsumer {
 
     public KConsumer() {
 
-        this.props = new Properties();
-        this.jsonMapper = new JsonMapper();
-        this.xmlMapper = new XmlMapper();
+        this.props = new Properties(); 
         this.props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 BOOTSTRAP_SERVERS_UAT);
         this.props.put(ConsumerConfig.GROUP_ID_CONFIG, "ta-consumer-" + topicName + "-" + new Random().nextInt());

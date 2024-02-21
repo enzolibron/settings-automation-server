@@ -4,20 +4,18 @@ import com.caspo.settingsautomationserver.models.Competition;
 import com.caspo.settingsautomationserver.repositories.CompetitionRepository;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
  *
  * @author 01PH1694.Lorenzo.L
  */
+@RequiredArgsConstructor
 @Service
 public class CompetitionDao implements Dao<Competition> {
 
     private final CompetitionRepository competitionRepository;
-
-    public CompetitionDao(CompetitionRepository competitionRepository) {
-        this.competitionRepository = competitionRepository;
-    }
 
     @Override
     public Competition get(Object id) {

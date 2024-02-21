@@ -11,23 +11,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@RequiredArgsConstructor
 @SpringBootApplication
 @Transactional
 public class SettingsAutomationServerApplication implements CommandLineRunner {
 
-    @Autowired
-    private EventSettingService eventSettingService;
 
-    @Autowired
-    private GetEsportEvents getEsportEvents;
-
-    @Autowired
-    private KConsumer kConsumer;
+    private final EventSettingService eventSettingService;
+    private final GetEsportEvents getEsportEvents;
+    private final KConsumer kConsumer;
     
     public static void main(String[] args) {
         SpringApplication.run(SettingsAutomationServerApplication.class, args);

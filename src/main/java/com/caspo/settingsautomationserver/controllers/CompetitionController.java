@@ -3,6 +3,7 @@ package com.caspo.settingsautomationserver.controllers;
 import com.caspo.settingsautomationserver.daos.CompetitionDao;
 import com.caspo.settingsautomationserver.dtos.CompetitionRequestDto;
 import com.caspo.settingsautomationserver.models.Competition;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,15 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * @author 01PH1694.Lorenzo.L
  */
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/competitions")
 public class CompetitionController {
 
     private final CompetitionDao competitionDao;
-
-    public CompetitionController(CompetitionDao competitionDao) {
-        this.competitionDao = competitionDao;
-    }
 
     @PostMapping
     public ResponseEntity create(@RequestBody CompetitionRequestDto request) {

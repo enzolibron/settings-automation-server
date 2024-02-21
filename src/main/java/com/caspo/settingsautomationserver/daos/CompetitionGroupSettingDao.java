@@ -6,22 +6,19 @@ import com.caspo.settingsautomationserver.repositories.CompetitionGroupSettingRe
 import com.caspo.settingsautomationserver.repositories.CompetitionRepository;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
  *
  * @author 01PH1694.Lorenzo.L
  */
+@RequiredArgsConstructor
 @Service
 public class CompetitionGroupSettingDao implements Dao<CompetitionGroupSetting> {
 
     private final CompetitionGroupSettingRepository competitionGroupSettingRepository;
     private final CompetitionRepository competitionRepository;
-
-    public CompetitionGroupSettingDao(CompetitionGroupSettingRepository competitionGroupSettingRepository, CompetitionRepository competitionRepository) {
-        this.competitionGroupSettingRepository = competitionGroupSettingRepository;
-        this.competitionRepository = competitionRepository;
-    }
 
     @Override
     public CompetitionGroupSetting get(Object id) {

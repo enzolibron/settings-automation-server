@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -19,23 +20,20 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
  *
  * @author 01PH1694.Lorenzo.L
  */
+@RequiredArgsConstructor
 @Component
 public class GetEsportEvents {
 
     private final int SPORTID = 23;
     private final String GMMURL = EcUrl.UAT.url;
-
-    @Autowired
-    private CompetitionGroupSettingDao competitionGroupSettingDao;
-
-    JSONParser parser = new JSONParser();
+    private final JSONParser parser = new JSONParser();
+    private final CompetitionGroupSettingDao competitionGroupSettingDao;
 
     public List<Event> getEvents() throws IOException {
 

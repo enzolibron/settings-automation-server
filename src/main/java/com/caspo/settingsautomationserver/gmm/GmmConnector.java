@@ -12,6 +12,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.text.SimpleDateFormat;
+import lombok.RequiredArgsConstructor;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -26,16 +27,12 @@ import org.springframework.stereotype.Component;
  *
  * @author 01PH1694.Lorenzo.L
  */
+@RequiredArgsConstructor
 @Component
 public class GmmConnector {
 
     private final Aes aes;
-    
-    public GmmConnector(Aes aes){
-        this.aes = aes;
-    }
-
-    SimpleDateFormat sd = new SimpleDateFormat("yyMMddHHmmss");
+    private final SimpleDateFormat sd = new SimpleDateFormat("yyMMddHHmmss");
 
     private final String KEY = "Sportsbook";
     private final String IV = "1234567890ABCDEF";
