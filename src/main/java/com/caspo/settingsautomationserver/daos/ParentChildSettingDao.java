@@ -58,7 +58,7 @@ public class ParentChildSettingDao implements Dao<ParentChildSetting> {
                 existing.setHomeKills(t.getHomeKills());
             }
 
-            if (t.getAwayKills()!= null) {
+            if (t.getAwayKills() != null) {
                 existing.setAwayKills(t.getAwayKills());
             }
 
