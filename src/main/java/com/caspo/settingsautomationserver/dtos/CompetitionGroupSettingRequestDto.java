@@ -1,4 +1,3 @@
-
 package com.caspo.settingsautomationserver.dtos;
 
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;

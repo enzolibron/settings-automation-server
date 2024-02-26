@@ -1,4 +1,3 @@
-
 package com.caspo.settingsautomationserver.dtos;
 
 /**

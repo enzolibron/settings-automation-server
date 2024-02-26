@@ -1,9 +1,7 @@
 package com.caspo.settingsautomationserver.models;
 
 import com.caspo.settingsautomationserver.models.attributeconverter.CompetitionGroupSettingConverter;
-import com.caspo.settingsautomationserver.models.attributeconverter.ScheduledFutureConverter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.concurrent.ScheduledFuture;
 import javax.persistence.Column;
 import javax.persistence.Convert;
