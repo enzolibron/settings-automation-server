@@ -27,4 +27,5 @@ public class CompetitionGroupSettingRequestDto implements Dto<CompetitionGroupSe
         
         return entity;
     }
+
 }
