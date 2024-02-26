@@ -1,7 +1,8 @@
 package com.caspo.settingsautomationserver.kafka;
 
-import com.caspo.settingsautomationserver.EventStorage;
+import com.caspo.settingsautomationserver.ScheduledEventsStorage;
 import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
+import com.caspo.settingsautomationserver.daos.EventDao;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.EcPushFeedEventDto;
 import com.caspo.settingsautomationserver.models.Event;
@@ -44,6 +45,9 @@ public class KConsumer {
     @Autowired
     private CompetitionGroupSettingDao competitionGroupSettingDao;
 
+    @Autowired
+    private EventDao eventDao;
+
     private final static String BOOTSTRAP_SERVERS_UAT = "10.12.8.146:9092,10.12.8.147:9092,10.12.8.148:9092";
 
     public KConsumer() {
@@ -68,7 +72,7 @@ public class KConsumer {
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(5000);
                 System.out.println(new Date() + ": listening for updates in " + this.topicName);
-                System.out.println("EventStorage Size: " + EventStorage.get().getEvents().size());
+                System.out.println("EventStorage Size: " + ScheduledEventsStorage.get().getEvents().size());
 
                 for (ConsumerRecord<String, String> record : records) {
                     try {
@@ -100,33 +104,35 @@ public class KConsumer {
             if (competitionGroupSetting != null) {
                 event = new Event();
                 //if record has eventid it is a new match, if not is an update record
-                //add new newEvent in EventStorage
-                event.setEcEventID(ecPushFeedEventDto.getEventid());
+                //add new newEvent in ScheduledEventsStorage
+                event.setEventId(ecPushFeedEventDto.getEventid());
                 event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
                 event.setIsRB(ecPushFeedEventDto.getIsRB());
                 event.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
                 event.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
                 event.setCompetitionGroupSetting(competitionGroupSetting);
+                event.setAway(ecPushFeedEventDto.getAway().getName());
+                event.setHome(ecPushFeedEventDto.getHome().getName());
 
                 event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
 
-                if (!eventSettingService.isEventRB(event)) {
+                if (!eventSettingService.isEventAlreadyStarted(event)) {
                     eventSettingService.setNewMatchSetting(event);
                     event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
                 }
 
-                EventStorage.get().add(event);
+//                ScheduledEventsStorage.get().add(event);
+                eventDao.save(event);
             }
 
         } else {
             //if update newEvent scheduled
-            event = EventStorage.get().getEvents().stream()
-                    .filter(item -> item.getEcEventID().equalsIgnoreCase(ecPushFeedEventDto.getEcEventID()))
+            event = ScheduledEventsStorage.get().getEvents().stream()
+                    .filter(item -> item.getEventId().equalsIgnoreCase(ecPushFeedEventDto.getEcEventID()))
                     .findFirst()
                     .orElse(null);
 
-            int eventIndex = EventStorage.get().getIndex(event);
-
+            int eventIndex = ScheduledEventsStorage.get().getIndex(event);
             //cancel previous scheduled task
             event.getKickoffTimeMinusTodayScheduledTask().cancel(false);
             event.getKickoffTimeScheduledTask().cancel(false);
@@ -137,11 +143,12 @@ public class KConsumer {
             //set new scheduled task
             event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
 
-            if (!eventSettingService.isEventRB(event)) {
+            if (!eventSettingService.isEventAlreadyStarted(event)) {
                 event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
             }
 
-            EventStorage.get().updateEvent(eventIndex, event);
+//            ScheduledEventsStorage.get().updateEvent(eventIndex, event);
+            eventDao.update(event, event.getEventId());
         }
 
         return event;

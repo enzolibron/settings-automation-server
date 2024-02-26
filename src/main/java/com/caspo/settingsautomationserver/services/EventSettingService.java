@@ -1,6 +1,9 @@
 package com.caspo.settingsautomationserver.services;
 
+import com.caspo.settingsautomationserver.ScheduledEventsStorage;
+import com.caspo.settingsautomationserver.daos.EventDao;
 import com.caspo.settingsautomationserver.dtos.EventBetholdRequestDto;
+import com.caspo.settingsautomationserver.ec.GetEsportEvents;
 import com.caspo.settingsautomationserver.enums.SportId;
 import com.caspo.settingsautomationserver.models.BetType;
 import com.caspo.settingsautomationserver.models.ChildEvent;
@@ -8,9 +11,11 @@ import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
 import com.caspo.settingsautomationserver.repositories.BetTypeRepository;
 import com.caspo.settingsautomationserver.utils.DateUtil;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,12 +42,14 @@ public class EventSettingService {
     private final JSONParser jsonParser = new JSONParser();
     private final BetTypeRepository betTypeRepository;
     private final GmmService gmmService;
+    private final GetEsportEvents getEsportEvents;
+    private final EventDao eventDao;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     public void setNewMatchSetting(Event event) {
-        gmmService.setEventByMtsgp(Integer.valueOf(event.getEcEventID()), event.getCompetitionGroupSetting().getStraight());
+        gmmService.setEventByMtsgp(Integer.valueOf(event.getEventId()), event.getCompetitionGroupSetting().getStraight());
         setMarginByMarketType(event);
         setMarginByMarketLineName(event);
     }
@@ -53,7 +60,7 @@ public class EventSettingService {
 
         //schedule task for kickoff time - today
         Runnable kickoffTimeMinusTodaytask = () -> {
-            System.out.println(new Date() + ": Running kickoffTimeMinusTodaytask for event: " + event.getEcEventID());
+            System.out.println(new Date() + ": Running kickoffTimeMinusTodaytask for event: " + event.getEventId());
             setMtsgpByMtsgforToday(event, event.getCompetitionGroupSetting());
             setMarginByMarketType(event);
             setMarginByMarketLineName(event);
@@ -73,7 +80,7 @@ public class EventSettingService {
         //schedule task for kickoff
         Runnable kickoffTask = () -> {
             try {
-                System.out.println(new Date() + ": Running kickoffTask for event: " + event.getEcEventID());
+                System.out.println(new Date() + ": Running kickoffTask for event: " + event.getEventId());
                 TimeUnit.SECONDS.sleep(10);
                 setEventBetHold(event, event.getCompetitionGroupSetting());
                 setMarginByMarketType(event);
@@ -120,39 +127,39 @@ public class EventSettingService {
     }
 
     private void setMarginByMarketLineName(Event event) {
-        List<ChildEvent> childEvent = gmmService.getChildEvent(event.getEcEventID());
+        List<ChildEvent> childEvent = gmmService.getChildEvent(event.getEventId());
 
         //get eventIDs
         List<Integer> eventIds = childEvent.stream()
                 .map(item -> item.getEventID()).collect(Collectors.toList());
 
         //get parent event propositions and set margin
-        getPropositionsAndSetMargin(event.getEcEventID(), isEventRB(event));
+        getPropositionsAndSetMargin(event.getEventId(), isEventAlreadyStarted(event));
 
         //get child event propositions and set margin
         eventIds.stream().forEach(childEventId -> {
-            getPropositionsAndSetMargin(childEventId.toString(), isEventRB(event));
+            getPropositionsAndSetMargin(childEventId.toString(), isEventAlreadyStarted(event));
         });
 
     }
 
     private void setMtsgpByMtsgforToday(Event event, CompetitionGroupSetting competitionGroupSetting) {
         //setMtsgpByMtsg for mtsgName STRAIGHT
-        gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEcEventID()), competitionGroupSetting.getStraightToday(), "Straight");
+        gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEventId()), competitionGroupSetting.getStraightToday(), "Straight");
 
         //setMtsgpByMtsg for mtsgName Proposition
         setMtsgpByMtsgForProposition(event, competitionGroupSetting.getPropositionToday());
     }
 
     private void setMtsgpByMtsgForProposition(Event event, String mtsgpName) {
-        List<ChildEvent> childEvent = gmmService.getChildEvent(event.getEcEventID());
+        List<ChildEvent> childEvent = gmmService.getChildEvent(event.getEventId());
 
         //get eventIDs
         List<Integer> eventIds = childEvent.stream()
                 .map(item -> item.getEventID()).collect(Collectors.toList());
 
         //add parent eventId
-        eventIds.add(Integer.valueOf(event.getEcEventID()));
+        eventIds.add(Integer.valueOf(event.getEventId()));
 
         eventIds.stream().forEach(eventId -> {
             try {
@@ -173,7 +180,7 @@ public class EventSettingService {
 
     private void setMarginByMarketType(Event event) {
         try {
-            String[] orgSpread = gmmService.getOrgSpread(event.getEcEventID());
+            String[] orgSpread = gmmService.getOrgSpread(event.getEventId());
             JSONObject resultJsonObject = (JSONObject) jsonParser.parse(orgSpread[1]);
             JSONObject responseJSONObject = (JSONObject) resultJsonObject.get("Response");
 
@@ -187,7 +194,7 @@ public class EventSettingService {
                     Optional<BetType> betType = betTypeRepository.findById((Long) betTypeJsonObject.get("bettypeId"));
 
                     if (betType.isPresent()) {
-                        gmmService.setMarginByMarketType(event.getEcEventID(), Integer.parseInt(betType.get().getMarketTypeId()), 1.02);
+                        gmmService.setMarginByMarketType(event.getEventId(), Integer.parseInt(betType.get().getMarketTypeId()), 1.02);
                     } else {
                         Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "bet type: {0} not found", betTypeJsonObject.get("bettypeId"));
                     }
@@ -203,7 +210,7 @@ public class EventSettingService {
     private void setEventBetHold(Event event, CompetitionGroupSetting competitionGroupSetting) {
 
         EventBetholdRequestDto request = new EventBetholdRequestDto();
-        request.setEventid(Integer.valueOf(event.getEcEventID()));
+        request.setEventid(Integer.valueOf(event.getEventId()));
         request.setHoldAmount(competitionGroupSetting.getBetholdAmount());
         request.setHoldDuration(competitionGroupSetting.getBetholdDuration());
         request.setIsHoldBet(1);
@@ -245,8 +252,49 @@ public class EventSettingService {
         }
     }
 
-    public Boolean isEventRB(Event event) {
+    public Boolean isEventAlreadyStarted(Event event) {
         return computeKickoffPeriod(event.getEventDate()) < 0L;
+    }
+
+    public void processEventsFromEc() throws IOException, InterruptedException {
+        List<Event> eventListFromEc = null;
+
+        while (eventListFromEc == null) {
+            System.out.println(new Date() + " retrying to retrieve events... ");
+            eventListFromEc = getEsportEvents.getEvents();
+            TimeUnit.SECONDS.sleep(5);
+        }
+
+        //Check if event from ec is already existing in events in DB, if not, save
+        eventListFromEc.stream().forEach(eventFromEc -> {
+            Event existing = eventDao.get(eventFromEc.getEventId());
+
+            if (existing == null) {
+                eventDao.save(eventFromEc);
+            } else {
+                eventDao.update(eventFromEc, existing.getEventId());
+            }
+
+        });
+
+        List<Event> toScheduleEventList = eventDao.getAll()
+                .stream()
+                .map(event -> {
+                    if (!isEventAlreadyStarted(event)) {
+                        setNewMatchSetting(event);
+                        event.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(event));
+                        event.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(event));
+                        return event;
+                    } else {
+                        return null;
+                    }
+
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        ScheduledEventsStorage.get().addAll(toScheduleEventList);
+
     }
 
 }

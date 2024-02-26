@@ -8,19 +8,19 @@ import java.util.List;
  *
  * @author 01PH1694.Lorenzo.L
  */
-public class EventStorage {
+public class ScheduledEventsStorage {
 
-    private static EventStorage eventStorage_instance = null;
+    private static ScheduledEventsStorage eventStorage_instance = null;
 
     private final List<Event> events;
 
-    private EventStorage() {
+    private ScheduledEventsStorage() {
         events = new ArrayList();
     }
 
-    public static synchronized EventStorage get() {
+    public static synchronized ScheduledEventsStorage get() {
         if (eventStorage_instance == null) {
-            eventStorage_instance = new EventStorage();
+            eventStorage_instance = new ScheduledEventsStorage();
         }
 
         return eventStorage_instance;

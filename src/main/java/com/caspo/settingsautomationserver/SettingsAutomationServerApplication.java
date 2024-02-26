@@ -1,5 +1,6 @@
 package com.caspo.settingsautomationserver;
 
+import com.caspo.settingsautomationserver.daos.EventDao;
 import com.caspo.settingsautomationserver.ec.GetEsportEvents;
 import com.caspo.settingsautomationserver.kafka.KConsumer;
 import com.caspo.settingsautomationserver.models.Event;
@@ -21,11 +22,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @Transactional
 public class SettingsAutomationServerApplication implements CommandLineRunner {
 
-
     private final EventSettingService eventSettingService;
-    private final GetEsportEvents getEsportEvents;
     private final KConsumer kConsumer;
-    
+
     public static void main(String[] args) {
         SpringApplication.run(SettingsAutomationServerApplication.class, args);
 
@@ -35,26 +34,12 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
         try {
-            List<Event> eventList = null;
-
-            while (eventList == null) {
-                System.out.println(new Date() + " retrying to retrieve events... ");
-                eventList = getEsportEvents.getEvents();
-                TimeUnit.SECONDS.sleep(5);
-            }
-            eventList.stream().forEach(event -> {
-                eventSettingService.setNewMatchSetting(event);
-                event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
-                event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
-            });
-
-            EventStorage.get().addAll(eventList);
-
-        } catch (IOException ex) {
+            eventSettingService.processEventsFromEc();
+        } catch (IOException | InterruptedException ex) {
             Logger.getLogger(SettingsAutomationServerApplication.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        kConsumer.startConsumer();
+//        kConsumer.startConsumer();
     }
 
 }

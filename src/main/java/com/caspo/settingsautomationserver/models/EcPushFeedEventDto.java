@@ -15,4 +15,6 @@ public class EcPushFeedEventDto {
     private String isRB;
     private String eventDate;
     private EcPushFeedCompetitionDto competition;
+    private EcPushFeedAwayHomeDto away;
+    private EcPushFeedAwayHomeDto home;
 }

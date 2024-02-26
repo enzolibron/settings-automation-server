@@ -82,11 +82,13 @@ public class GetEsportEvents {
             //add to list if event has gmmID and hasn't started
             if (!jsonObject.get("gmmID").toString().isEmpty() && computeKickoffPeriod(jsonObject.get("eventDate").toString()) > 0L) {
                 Event newEvent = new Event();
-                newEvent.setEcEventID(jsonObject.get("gmmID").toString());
+                newEvent.setEventId(jsonObject.get("gmmID").toString());
                 newEvent.setEventDate(jsonObject.get("eventDate").toString().replaceAll("/", "-"));
                 newEvent.setIsRB(jsonObject.get("isRB").toString());
                 newEvent.setCompetitionId(jsonObject.get("gmmCompetitionID").toString());
                 newEvent.setCompetitionName(jsonObject.get("gmmCompetition").toString());
+                newEvent.setAway(jsonObject.get("gmmAway").toString());
+                newEvent.setHome(jsonObject.get("gmmHome").toString());
 
                 CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(newEvent.getCompetitionId()));
                 if (competitionGroupSetting != null) {
