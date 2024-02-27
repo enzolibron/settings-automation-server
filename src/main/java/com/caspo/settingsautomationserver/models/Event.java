@@ -15,7 +15,6 @@ import lombok.Data;
  * @author 01PH1694.Lorenzo.L
  */
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
 @Entity(name = "events")
 public class Event {
 

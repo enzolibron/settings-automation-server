@@ -44,7 +44,12 @@ public class EventService {
             }
 
             ScheduledEventsStorage.get().updateEvent(eventIndex, event);
-            return eventDao.update(event, event.getEventId());
+            Event result = eventDao.update(event, event.getEventId());
+            if(result == null) {
+                return null;
+            } else {
+                return result;
+            }
         }
 
     }

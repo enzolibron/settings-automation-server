@@ -49,7 +49,7 @@ public class EventSettingService {
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
     public void setNewMatchSetting(Event event) {
-        gmmService.setEventByMtsgp(Integer.valueOf(event.getEventId()), event.getCompetitionGroupSetting().getStraight());
+        gmmService.setEventByMtsgp(Integer.valueOf(event.getEventId()), event.getCompetitionGroupSetting().getMtsgp());
         setMarginByMarketType(event);
         setMarginByMarketLineName(event);
     }
@@ -144,10 +144,9 @@ public class EventSettingService {
     }
 
     private void setMtsgpByMtsgforToday(Event event, CompetitionGroupSetting competitionGroupSetting) {
-        //setMtsgpByMtsg for mtsgName STRAIGHT
+        //setMtsgp for straight, proposition, and obt TODAY
         gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEventId()), competitionGroupSetting.getStraightToday(), "Straight");
-
-        //setMtsgpByMtsg for mtsgName Proposition
+        gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEventId()), competitionGroupSetting.getObtToday(), "OBT");
         setMtsgpByMtsgForProposition(event, competitionGroupSetting.getPropositionToday());
     }
 

@@ -51,16 +51,40 @@ public class CompetitionGroupSettingDao implements Dao<CompetitionGroupSetting> 
                 existing.setPropositionToday(t.getPropositionToday());
             }
 
-            if (t.getStraight() != null) {
-                existing.setStraight(t.getStraight());
+            if (t.getMtsgp()!= null) {
+                existing.setMtsgp(t.getMtsgp());
             }
 
             if (t.getStraightToday() != null) {
                 existing.setStraightToday(t.getStraightToday());
             }
+            
+            if(t.getObtToday() != null) {
+                existing.setObtToday(t.getObtToday());
+            }
+            
+            if(t.getStraightMarginGroupName() != null) {
+                existing.setStraightMarginGroupName(t.getStraightMarginGroupName());
+            }
+            
+            if(t.getStraightTodayMarginGroupName() != null) {
+                existing.setStraightTodayMarginGroupName(t.getStraightTodayMarginGroupName());
+            }
+            
+            if(t.getIpMarginGroupName() != null) {
+                existing.setIpMarginGroupName(t.getIpMarginGroupName());
+            }
 
             if (t.getToday() != null) {
                 existing.setToday(t.getToday());
+            }
+            
+            if(t.getBetholdAmount() != null) {
+                existing.setBetholdAmount(t.getBetholdAmount());
+            }
+            
+            if(t.getBetholdDuration() != null) {
+                existing.setBetholdDuration(t.getBetholdDuration());
             }
 
             return competitionGroupSettingRepository.save(existing);

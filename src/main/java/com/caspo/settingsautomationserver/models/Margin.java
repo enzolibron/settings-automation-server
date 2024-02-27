@@ -1,9 +1,9 @@
 package com.caspo.settingsautomationserver.models;
 
-import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import lombok.Data;
 
@@ -16,8 +16,8 @@ import lombok.Data;
 public class Margin {
 
     @Id
-    @GeneratedValue
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "margin_group_name")
     private String marginGroupName;

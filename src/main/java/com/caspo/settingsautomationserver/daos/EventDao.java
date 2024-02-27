@@ -47,7 +47,6 @@ public class EventDao implements Dao<Event> {
     }
     
     @Override
-    
     public Event update(Event t, Object id) {
         Event existing = get(id);
         

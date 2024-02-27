@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 public class MarginDto implements Dto<Margin> {
     
-    private UUID id;
+    private Long id;
     private String marginGroupName;
     private Integer sportId;
     private String betTypeName;

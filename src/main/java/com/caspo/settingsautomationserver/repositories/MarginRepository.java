@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
  * @author 01PH1694.Lorenzo.L
  */
 @Repository
-public interface MarginRepository extends JpaRepository<Margin, UUID> {
+public interface MarginRepository extends JpaRepository<Margin, Long> {
     
     List<Margin> findAllByMarginGroupName(String groupName);
     

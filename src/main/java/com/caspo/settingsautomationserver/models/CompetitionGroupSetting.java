@@ -16,8 +16,8 @@ public class CompetitionGroupSetting {
     @Id
     private String name;
 
-    @Column(name = "straight")
-    private String straight;
+    @Column(name = "mtsgp")
+    private String mtsgp;
 
     @Column(name = "today")
     private Integer today;
@@ -27,6 +27,18 @@ public class CompetitionGroupSetting {
 
     @Column(name = "straight_today")
     private String straightToday;
+    
+    @Column(name = "obt_today")
+    private String obtToday;
+    
+    @Column(name = "straight_margin_group_name")
+    private String straightMarginGroupName;
+    
+    @Column(name = "straight_today_margin_group_name")
+    private String straightTodayMarginGroupName;
+    
+    @Column(name = "ip_margin_group_name")
+    private String ipMarginGroupName;
 
     @Column(name = "bethold_amount")
     private Integer betholdAmount;
