@@ -40,7 +40,7 @@ public class Event {
     private ScheduledFuture<?> kickoffTimeScheduledTask;
 
     @Convert(converter = CompetitionGroupSettingConverter.class)
-    @Column(name = "competition_group_setting")
+    @Column(name = "competition_group_setting", length = 1000)
     private CompetitionGroupSetting competitionGroupSetting;
 
     @Column(name = "away")
