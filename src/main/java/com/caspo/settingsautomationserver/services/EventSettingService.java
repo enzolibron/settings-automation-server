@@ -53,22 +53,12 @@ public class EventSettingService {
 
     public void setNewMatchSetting(Event event) {
         gmmService.setEventByMtsgp(Integer.valueOf(event.getEventId()), event.getCompetitionGroupSetting().getMtsgp());
-
-        //for setting parent event margin
         //non-proposition
         setMarginByMarketType(event, event.getCompetitionGroupSetting().getStraightMarginGroupName());
         //proposition
         setMarginByMarketLineName(event.getEventId(), event.getCompetitionGroupSetting().getStraightMarginGroupName());
 
-        //for setting child event margin
-//        List<Integer> childEventIds = gmmService.getChildEvent(event.getEventId()).stream().map(item -> item.getEventID()).collect(Collectors.toList());
-//        childEventIds.stream().forEach(childEventId -> {
-//            Event childEvent = eventDao.get(String.valueOf(childEventId) );
-//            //proposition
-//            setMarginByMarketLineName(childEvent, event.getCompetitionGroupSetting().getStraightMarginGroupName());
-//            //non-proposition
-//            setMarginByMarketType(childEvent, event.getCompetitionGroupSetting().getStraightMarginGroupName());
-//        });
+
     }
 
     public ScheduledFuture<?> setKickoffTimeMinusTodayScheduledTask(Event event) {
@@ -79,24 +69,11 @@ public class EventSettingService {
         Runnable kickoffTimeMinusTodaytask = () -> {
 
             System.out.println(new Date() + ": Running kickoffTimeMinusTodaytask for event: " + event.getEventId());
-
             setMtsgpByMtsgforToday(event, event.getCompetitionGroupSetting());
-
-            //for setting parent event margin
             //non-proposition
             setMarginByMarketType(event, event.getCompetitionGroupSetting().getStraightTodayMarginGroupName());
             //proposition
             setMarginByMarketLineName(event.getEventId(), event.getCompetitionGroupSetting().getStraightTodayMarginGroupName());
-
-            //for setting child event margin
-//            List<Integer> childEventIds = gmmService.getChildEvent(event.getEventId()).stream().map(item -> item.getEventID()).collect(Collectors.toList());
-//            childEventIds.stream().forEach(childEventId -> {
-//                Event childEvent = eventDao.get(childEventId);
-//                //proposition
-//                setMarginByMarketLineName(childEvent, event.getCompetitionGroupSetting().getStraightTodayMarginGroupName());
-//                //non-proposition
-//                setMarginByMarketType(childEvent, event.getCompetitionGroupSetting().getStraightTodayMarginGroupName());
-//            });
         };
 
         //compute period
@@ -115,28 +92,17 @@ public class EventSettingService {
             try {
                 System.out.println(new Date() + ": Running kickoffTask for event: " + event.getEventId());
                 TimeUnit.SECONDS.sleep(10);
+                
                 setEventBetHold(event, event.getCompetitionGroupSetting());
-
-                //for setting parent event margin
                 //non-proposition
                 setMarginByMarketType(event, event.getCompetitionGroupSetting().getIpMarginGroupName());
                 //proposition
                 setMarginByMarketLineName(event.getEventId(), event.getCompetitionGroupSetting().getIpMarginGroupName());
-
-                //for setting child event margin
-//                List<Integer> childEventIds = gmmService.getChildEvent(event.getEventId()).stream().map(item -> item.getEventID()).collect(Collectors.toList());
-//                childEventIds.stream().forEach(childEventId -> {
-//                    Event childEvent = eventDao.get(childEventId);
-//                    //proposition
-//                    setMarginByMarketLineName(childEvent, event.getCompetitionGroupSetting().getIpMarginGroupName());
-//                    //non-proposition
-//                    setMarginByMarketType(childEvent, event.getCompetitionGroupSetting().getIpMarginGroupName());
-//                });
             } catch (InterruptedException ex) {
                 Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
             }
         };
-
+        System.out.println("Finish setting kickOffTask");
         Long kickoffTimeTaskPeriod = computeKickoffPeriod(event.getEventDate());
 
         ScheduledFuture<?> kickoffTimeTaskScheduledTask = scheduler.schedule(kickoffTask, kickoffTimeTaskPeriod, TimeUnit.MILLISECONDS);
@@ -162,7 +128,12 @@ public class EventSettingService {
                             .filter(x -> x.getBetTypeId().equals(Integer.valueOf((String) jsonObject.get("betTypeId"))))
                             .findAny();
 
-                    gmmService.setMarginByMarketLineName(Integer.valueOf(eventId), margin.get().getBetTypeName(), margin.get().getMarketTypeId(), margin.get().getMargin());
+                    if (margin.isPresent()) {
+                        gmmService.setMarginByMarketLineName(Integer.valueOf(eventId), margin.get().getBetTypeName(), margin.get().getMarketTypeId(), margin.get().getMargin());
+
+                    } else {
+                        Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "bet type: {0} not found", jsonObject.get("bettypeId"));
+                    }
 
                 }
             }
@@ -184,34 +155,8 @@ public class EventSettingService {
         //setMtsgp for straight, proposition, and obt TODAY
         gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEventId()), competitionGroupSetting.getStraightToday(), "Straight");
         gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEventId()), competitionGroupSetting.getObtToday(), "OBT");
-        setMtsgpByMtsgForProposition(event, competitionGroupSetting.getPropositionToday());
-    }
-
-    private void setMtsgpByMtsgForProposition(Event event, String mtsgpName) {
-        List<ChildEvent> childEvent = gmmService.getChildEvent(event.getEventId());
-
-        //get eventIDs
-        List<Integer> eventIds = childEvent.stream()
-                .map(item -> item.getEventID()).collect(Collectors.toList());
-
-        //add parent eventId
-        eventIds.add(Integer.valueOf(event.getEventId()));
-
-        eventIds.stream().forEach(eventId -> {
-            try {
-                String[] propositions = gmmService.getPropositions(eventId.toString());
-                JSONObject resultJsonObject = (JSONObject) jsonParser.parse(propositions[1]);
-                JSONObject responseJSONObject = (JSONObject) resultJsonObject.get("Response");
-
-                if (responseJSONObject != null) {
-                    gmmService.setMtsgpByMtsg(eventId, mtsgpName, "Proposition");
-                }
-
-            } catch (ParseException ex) {
-                Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        });
-
+        gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEventId()), competitionGroupSetting.getPropositionToday(), "Proposition");
+        
     }
 
     private void setMarginByMarketType(Event event, String marginGroupName) {
