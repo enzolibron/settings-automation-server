@@ -1,5 +1,6 @@
 package com.caspo.settingsautomationserver.ec;
 
+import com.caspo.settingsautomationserver.enums.EcUrl;
 import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
@@ -94,6 +95,8 @@ public class GetEsportEvents {
                 if (competitionGroupSetting != null) {
                     newEvent.setCompetitionGroupSetting(competitionGroupSetting);
                     eventList.add(newEvent);
+                    
+//                    getChildEvents(newEvent);
                 }
 
             }
@@ -101,5 +104,10 @@ public class GetEsportEvents {
 
         return eventList;
     }
+    
+    
+//    private List<Event> getChildEvents(Event newEvent){
+//        
+//    }
 
 }

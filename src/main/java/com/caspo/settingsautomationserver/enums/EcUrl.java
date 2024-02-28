@@ -1,4 +1,4 @@
-package com.caspo.settingsautomationserver.ec;
+package com.caspo.settingsautomationserver.enums;
 
 /**
  *

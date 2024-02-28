@@ -39,7 +39,7 @@ public class EventService {
             //set new scheduled task
             eventFromScheduledEventStorage.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
 
-            if (!eventSettingService.isEventAlreadyStarted(event)) {
+            if (!eventSettingService.isEventAlreadyStarted(event.getEventDate())) {
                 eventFromScheduledEventStorage.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
             }
 

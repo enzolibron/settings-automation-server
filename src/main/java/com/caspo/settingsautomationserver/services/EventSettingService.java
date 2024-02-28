@@ -119,14 +119,14 @@ public class EventSettingService {
                 for (Object item : propsJsonArray) {
                     JSONObject jsonObject = (JSONObject) item;
                     Optional<Margin> margin = margins.stream()
-                            .filter(x -> x.getBetTypeId().equals(Integer.valueOf((String) jsonObject.get("betTypeId"))))
+                            .filter(x -> x.getBetTypeName().equals(Integer.valueOf((String) jsonObject.get("propositionName"))))
                             .findAny();
 
                     if (margin.isPresent()) {
                         gmmService.setMarginByMarketLineName(Integer.valueOf(eventId), margin.get().getBetTypeName(), margin.get().getMarketTypeId(), margin.get().getMargin());
 
                     } else {
-                        Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "bet type: {0} not found", jsonObject.get("bettypeId"));
+                        Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "bet type nae: {0} not found", jsonObject.get("propositionName"));
                     }
 
                 }
@@ -168,13 +168,13 @@ public class EventSettingService {
                     JSONObject betTypeJsonObject = (JSONObject) item;
 
                     Optional<Margin> margin = margins.stream()
-                            .filter(x -> x.getBetTypeId().equals((int) (long) betTypeJsonObject.get("bettypeId")))
+                            .filter(x -> x.getBetTypeName().equals((String) betTypeJsonObject.get("name")))
                             .findAny();
 
                     if (margin.isPresent()) {
                         gmmService.setMarginByMarketType(event.getEventId(), margin.get().getMarketTypeId(), margin.get().getMargin());
                     } else {
-                        Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "bet type: {0} not found", betTypeJsonObject.get("bettypeId"));
+                        Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "bet type name: {0} not found", betTypeJsonObject.get("name"));
                     }
 
                 }
@@ -230,8 +230,8 @@ public class EventSettingService {
         }
     }
 
-    public Boolean isEventAlreadyStarted(Event event) {
-        return computeKickoffPeriod(event.getEventDate()) < 0L;
+    public Boolean isEventAlreadyStarted(String eventDate) {
+        return computeKickoffPeriod(eventDate) < 0L;
     }
 
     public void processEventsFromEc() throws IOException, InterruptedException {
@@ -257,7 +257,7 @@ public class EventSettingService {
         List<Event> toScheduleEventList = eventDao.getAll()
                 .stream()
                 .map(event -> {
-                    if (!isEventAlreadyStarted(event)) {
+                    if (!isEventAlreadyStarted(event.getEventDate())) {
                         setNewMatchSetting(event);
                         event.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(event));
                         event.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(event));

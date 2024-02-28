@@ -116,7 +116,7 @@ public class KConsumer {
 
                 event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
 
-                if (!eventSettingService.isEventAlreadyStarted(event)) {
+                if (!eventSettingService.isEventAlreadyStarted(event.getEventDate())) {
                     eventSettingService.setNewMatchSetting(event);
                     event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
                 }
@@ -143,7 +143,7 @@ public class KConsumer {
             //set new scheduled task
             event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
 
-            if (!eventSettingService.isEventAlreadyStarted(event)) {
+            if (!eventSettingService.isEventAlreadyStarted(event.getEventDate())) {
                 event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
             }
 
