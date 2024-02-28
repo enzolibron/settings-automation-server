@@ -6,12 +6,9 @@ import com.caspo.settingsautomationserver.daos.MarginDao;
 import com.caspo.settingsautomationserver.dtos.EventBetholdRequestDto;
 import com.caspo.settingsautomationserver.ec.GetEsportEvents;
 import com.caspo.settingsautomationserver.enums.SportId;
-import com.caspo.settingsautomationserver.models.BetType;
-import com.caspo.settingsautomationserver.models.ChildEvent;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
 import com.caspo.settingsautomationserver.models.Margin;
-import com.caspo.settingsautomationserver.repositories.BetTypeRepository;
 import com.caspo.settingsautomationserver.utils.DateUtil;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -42,7 +39,6 @@ import org.springframework.stereotype.Service;
 public class EventSettingService {
 
     private final JSONParser jsonParser = new JSONParser();
-    private final BetTypeRepository betTypeRepository;
     private final GmmService gmmService;
     private final GetEsportEvents getEsportEvents;
     private final EventDao eventDao;
@@ -78,7 +74,6 @@ public class EventSettingService {
 
         //compute period
         Long kickoffTimeMinusTodayTaskPeriod = computeKickoffMinusTodayPeriod(event.getEventDate(), settingToday);
-
         ScheduledFuture<?> kickoffTimeMinusTodayScheduledTask = scheduler.schedule(kickoffTimeMinusTodaytask, kickoffTimeMinusTodayTaskPeriod, TimeUnit.MILLISECONDS);
 
         return kickoffTimeMinusTodayScheduledTask;
@@ -102,9 +97,8 @@ public class EventSettingService {
                 Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
             }
         };
-        System.out.println("Finish setting kickOffTask");
-        Long kickoffTimeTaskPeriod = computeKickoffPeriod(event.getEventDate());
 
+        Long kickoffTimeTaskPeriod = computeKickoffPeriod(event.getEventDate());
         ScheduledFuture<?> kickoffTimeTaskScheduledTask = scheduler.schedule(kickoffTask, kickoffTimeTaskPeriod, TimeUnit.MILLISECONDS);
 
         return kickoffTimeTaskScheduledTask;
