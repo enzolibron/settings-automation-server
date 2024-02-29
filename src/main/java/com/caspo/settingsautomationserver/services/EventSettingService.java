@@ -54,7 +54,6 @@ public class EventSettingService {
         //proposition
         setMarginByMarketLineName(event.getEventId(), event.getCompetitionGroupSetting().getStraightMarginGroupName());
 
-
     }
 
     public ScheduledFuture<?> setKickoffTimeMinusTodayScheduledTask(Event event) {
@@ -87,7 +86,7 @@ public class EventSettingService {
             try {
                 System.out.println(new Date() + ": Running kickoffTask for event: " + event.getEventId());
                 TimeUnit.SECONDS.sleep(10);
-                
+
                 setEventBetHold(event, event.getCompetitionGroupSetting());
                 //non-proposition
                 setMarginByMarketType(event, event.getCompetitionGroupSetting().getIpMarginGroupName());
@@ -150,7 +149,7 @@ public class EventSettingService {
         gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEventId()), competitionGroupSetting.getStraightToday(), "Straight");
         gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEventId()), competitionGroupSetting.getObtToday(), "OBT");
         gmmService.setMtsgpByMtsg(Integer.valueOf(event.getEventId()), competitionGroupSetting.getPropositionToday(), "Proposition");
-        
+
     }
 
     private void setMarginByMarketType(Event event, String marginGroupName) {
@@ -245,10 +244,11 @@ public class EventSettingService {
         //Check if event from ec is already existing in events in DB, if not, save
         eventListFromEc.stream().forEach(eventFromEc -> {
             Event existing = eventDao.get(eventFromEc.getEventId());
-
             if (existing == null) {
                 eventDao.save(eventFromEc);
             } else {
+
+                eventFromEc.setCompetitionGroupSetting(existing.getCompetitionGroupSetting());
                 eventDao.update(eventFromEc, existing.getEventId());
             }
 
@@ -257,14 +257,11 @@ public class EventSettingService {
         List<Event> toScheduleEventList = eventDao.getAll()
                 .stream()
                 .map(event -> {
-                    if (!isEventAlreadyStarted(event.getEventDate())) {
-                        setNewMatchSetting(event);
-                        event.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(event));
-                        event.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(event));
-                        return event;
-                    } else {
-                        return null;
-                    }
+
+                    setNewMatchSetting(event);
+                    event.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(event));
+                    event.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(event));
+                    return event;
 
                 })
                 .filter(Objects::nonNull)

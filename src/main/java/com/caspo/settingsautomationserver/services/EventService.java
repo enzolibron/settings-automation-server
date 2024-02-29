@@ -28,34 +28,37 @@ public class EventService {
                 .findFirst()
                 .orElse(null);
 
-        int eventIndex = ScheduledEventsStorage.get().getIndex(eventFromScheduledEventStorage);
+        int scheduledEventIndex = ScheduledEventsStorage.get().getIndex(eventFromScheduledEventStorage);
 
         if (existing == null && eventFromScheduledEventStorage == null) {
             return null;
         } else {
-            
-            if(event.getCompetitionGroupSettingName() != null) {
+
+            if (event.getCompetitionGroupSettingName() != null) {
                 CompetitionGroupSetting cgs = competitionGroupSettingDao.get(event.getCompetitionGroupSettingName());
                 event.setCompetitionGroupSetting(cgs);
             }
-            
+
             Event updatedEvent = eventDao.update(event, event.getEventId());
-            ScheduledEventsStorage.get().updateEvent(eventIndex, event);
-            
+            ScheduledEventsStorage.get().updateEvent(scheduledEventIndex, updatedEvent);
+
             //cancel previous scheduled task
-            eventFromScheduledEventStorage.getKickoffTimeMinusTodayScheduledTask().cancel(false);
-            eventFromScheduledEventStorage.getKickoffTimeScheduledTask().cancel(false);
-            
+            if (eventFromScheduledEventStorage.getKickoffTimeMinusTodayScheduledTask() != null) {
+                eventFromScheduledEventStorage.getKickoffTimeMinusTodayScheduledTask().cancel(false);
+            }
+
+            if (eventFromScheduledEventStorage.getKickoffTimeScheduledTask() != null) {
+                eventFromScheduledEventStorage.getKickoffTimeScheduledTask().cancel(false);
+            }
+
             //set default settings
             eventSettingService.setNewMatchSetting(updatedEvent);
 
+            //set today scheduled task
+            eventFromScheduledEventStorage.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(updatedEvent));
+
             //set kickoff scheduled task
             eventFromScheduledEventStorage.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(updatedEvent));
-            
-            //set today scheduled task
-            if (!eventSettingService.isEventAlreadyStarted(updatedEvent.getEventDate())) {
-                eventFromScheduledEventStorage.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(updatedEvent));
-            }
 
             if (updatedEvent == null) {
                 return null;
