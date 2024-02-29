@@ -2,8 +2,10 @@ package com.caspo.settingsautomationserver.ec;
 
 import com.caspo.settingsautomationserver.enums.EcUrl;
 import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
+import com.caspo.settingsautomationserver.daos.ParentChildSettingDao;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
+import com.caspo.settingsautomationserver.models.ParentChildSetting;
 import static com.caspo.settingsautomationserver.services.EventSettingService.computeKickoffPeriod;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ public class GetEsportEvents {
     private final String GMMURL = EcUrl.UAT.url;
     private final JSONParser parser = new JSONParser();
     private final CompetitionGroupSettingDao competitionGroupSettingDao;
+    private final ParentChildSettingDao parentChildSettingDao;
 
     public List<Event> getEvents() throws IOException {
 
@@ -90,13 +93,18 @@ public class GetEsportEvents {
                 newEvent.setCompetitionName(jsonObject.get("gmmCompetition").toString());
                 newEvent.setAway(jsonObject.get("gmmAway").toString());
                 newEvent.setHome(jsonObject.get("gmmHome").toString());
+                
+                ParentChildSetting parentChildSetting = competitionGroupSettingDao.getParentChildSettingByCompetitionId(Long.valueOf(newEvent.getCompetitionId()));
 
-                CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(newEvent.getCompetitionId()));
-                if (competitionGroupSetting != null) {
-                    newEvent.setCompetitionGroupSetting(competitionGroupSetting);
-                    eventList.add(newEvent);
+                if (parentChildSetting != null) {
+                    CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getParent());
                     
+                    if (competitionGroupSettingParent != null) {
+                        newEvent.setCompetitionGroupSetting(competitionGroupSettingParent);
+                        eventList.add(newEvent);
+
 //                    getChildEvents(newEvent);
+                    }
                 }
 
             }
@@ -104,10 +112,8 @@ public class GetEsportEvents {
 
         return eventList;
     }
-    
-    
+
 //    private List<Event> getChildEvents(Event newEvent){
 //        
 //    }
-
 }

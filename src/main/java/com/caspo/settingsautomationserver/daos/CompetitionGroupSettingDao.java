@@ -2,6 +2,7 @@ package com.caspo.settingsautomationserver.daos;
 
 import com.caspo.settingsautomationserver.models.Competition;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
+import com.caspo.settingsautomationserver.models.ParentChildSetting;
 import com.caspo.settingsautomationserver.repositories.CompetitionGroupSettingRepository;
 import com.caspo.settingsautomationserver.repositories.CompetitionRepository;
 import java.util.List;
@@ -19,6 +20,7 @@ public class CompetitionGroupSettingDao implements Dao<CompetitionGroupSetting> 
 
     private final CompetitionGroupSettingRepository competitionGroupSettingRepository;
     private final CompetitionRepository competitionRepository;
+    private final ParentChildSettingDao parentChildSettingDao;
 
     @Override
     public CompetitionGroupSetting get(Object id) {
@@ -104,13 +106,15 @@ public class CompetitionGroupSettingDao implements Dao<CompetitionGroupSetting> 
 
     }
 
-    public CompetitionGroupSetting getCompetitionSettingByCompetitionId(Long id) {
+    public ParentChildSetting getParentChildSettingByCompetitionId(Long id) {
 
         Optional<Competition> competition = competitionRepository.findById(id);
+
         if (competition.isPresent()) {
-            Optional<CompetitionGroupSetting> setting = competitionGroupSettingRepository.findById(competition.get().getSettings());
-            if (setting.isPresent()) {
-                return setting.get();
+            ParentChildSetting setting = parentChildSettingDao.get(competition.get().getSettings());
+
+            if (setting != null) {
+                return setting;
             } else {
                 return null;
             }

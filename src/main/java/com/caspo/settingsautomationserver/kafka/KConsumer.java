@@ -6,6 +6,7 @@ import com.caspo.settingsautomationserver.daos.EventDao;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.EcPushFeedEventDto;
 import com.caspo.settingsautomationserver.models.Event;
+import com.caspo.settingsautomationserver.models.ParentChildSetting;
 import com.caspo.settingsautomationserver.services.EventSettingService;
 import static com.caspo.settingsautomationserver.utils.DateUtil.formatDateFromKafkaPushFeed;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -100,8 +101,12 @@ public class KConsumer {
         Event event = null;
 
         if (ecPushFeedEventDto.getEventid() != null) {
-            CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.getCompetitionSettingByCompetitionId(Long.valueOf(ecPushFeedEventDto.getCompetition().getId()));
-            if (competitionGroupSetting != null) {
+
+            ParentChildSetting parentChildSetting = competitionGroupSettingDao.getParentChildSettingByCompetitionId(Long.valueOf(ecPushFeedEventDto.getCompetition().getId()));
+
+            CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getParent());
+
+            if (competitionGroupSettingParent != null) {
                 event = new Event();
                 //if record has eventid it is a new match, if not is an update record
                 //add new newEvent in ScheduledEventsStorage
@@ -110,7 +115,7 @@ public class KConsumer {
                 event.setIsRB(ecPushFeedEventDto.getIsRB());
                 event.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
                 event.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
-                event.setCompetitionGroupSetting(competitionGroupSetting);
+                event.setCompetitionGroupSetting(competitionGroupSettingParent);
                 event.setAway(ecPushFeedEventDto.getAway().getName());
                 event.setHome(ecPushFeedEventDto.getHome().getName());
 
