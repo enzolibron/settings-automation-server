@@ -15,7 +15,7 @@ public class EventDto implements Dto<Event> {
     private String isRB;
     private String competitionId;
     private String competitionName;
-    private String settingName;
+    private String competitionGroupSettingName;
     private String away;
     private String home;
     
@@ -28,7 +28,7 @@ public class EventDto implements Dto<Event> {
         dto.setEventDate(event.getEventDate());
         dto.setEventId(event.getEventId());
         dto.setIsRB(event.getIsRB());
-        dto.setSettingName(event.getCompetitionGroupSetting().getName());
+        dto.setCompetitionGroupSettingName(event.getCompetitionGroupSetting().getName());
         
         return dto;
     }
@@ -43,6 +43,7 @@ public class EventDto implements Dto<Event> {
         entity.setEventId(this.eventId);
         entity.setHome(this.home);
         entity.setIsRB(this.isRB);
+        entity.setCompetitionGroupSettingName(this.competitionGroupSettingName);
         
         return entity;
     }

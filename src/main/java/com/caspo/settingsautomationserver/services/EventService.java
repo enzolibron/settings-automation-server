@@ -1,7 +1,9 @@
 package com.caspo.settingsautomationserver.services;
 
 import com.caspo.settingsautomationserver.ScheduledEventsStorage;
+import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
 import com.caspo.settingsautomationserver.daos.EventDao;
+import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,39 +18,49 @@ public class EventService {
 
     private final EventDao eventDao;
     private final EventSettingService eventSettingService;
+    private final CompetitionGroupSettingDao competitionGroupSettingDao;
 
     public Event updateEvent(Event event) {
         Event existing = eventDao.get(event.getEventId());
 
-        if (existing == null) {
+        Event eventFromScheduledEventStorage = ScheduledEventsStorage.get().getEvents().stream()
+                .filter(item -> item.getEventId().equalsIgnoreCase(event.getEventId()))
+                .findFirst()
+                .orElse(null);
+
+        int eventIndex = ScheduledEventsStorage.get().getIndex(eventFromScheduledEventStorage);
+
+        if (existing == null && eventFromScheduledEventStorage == null) {
             return null;
         } else {
-
-            //if update newEvent scheduled
-            Event eventFromScheduledEventStorage = ScheduledEventsStorage.get().getEvents().stream()
-                    .filter(item -> item.getEventId().equalsIgnoreCase(event.getEventId()))
-                    .findFirst()
-                    .orElse(null);
-
-            int eventIndex = ScheduledEventsStorage.get().getIndex(eventFromScheduledEventStorage);
-
+            
+            if(event.getCompetitionGroupSettingName() != null) {
+                CompetitionGroupSetting cgs = competitionGroupSettingDao.get(event.getCompetitionGroupSettingName());
+                event.setCompetitionGroupSetting(cgs);
+            }
+            
+            Event updatedEvent = eventDao.update(event, event.getEventId());
+            ScheduledEventsStorage.get().updateEvent(eventIndex, event);
+            
             //cancel previous scheduled task
             eventFromScheduledEventStorage.getKickoffTimeMinusTodayScheduledTask().cancel(false);
             eventFromScheduledEventStorage.getKickoffTimeScheduledTask().cancel(false);
+            
+            //set default settings
+            eventSettingService.setNewMatchSetting(updatedEvent);
 
-            //set new scheduled task
-            eventFromScheduledEventStorage.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
-
-            if (!eventSettingService.isEventAlreadyStarted(event.getEventDate())) {
-                eventFromScheduledEventStorage.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
+            //set kickoff scheduled task
+            eventFromScheduledEventStorage.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(updatedEvent));
+            
+            //set today scheduled task
+            if (!eventSettingService.isEventAlreadyStarted(updatedEvent.getEventDate())) {
+                eventFromScheduledEventStorage.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(updatedEvent));
             }
 
-            ScheduledEventsStorage.get().updateEvent(eventIndex, event);
-            Event result = eventDao.update(event, event.getEventId());
-            if(result == null) {
+            if (updatedEvent == null) {
                 return null;
             } else {
-                return result;
+                return updatedEvent;
             }
         }
 

@@ -43,7 +43,7 @@ public class EventController {
         if (result == null) {
             return new ResponseEntity("Event doesn't exist", HttpStatus.BAD_REQUEST);
         } else {
-            return new ResponseEntity(result, HttpStatus.OK);
+            return new ResponseEntity(EventDto.buildDto(result), HttpStatus.OK);
         }
 
     }

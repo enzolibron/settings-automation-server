@@ -52,38 +52,14 @@ public class EventDao implements Dao<Event> {
         
         if (existing != null) {
             
-            if (t.getCompetitionName() != null) {
-                existing.setCompetitionName(t.getCompetitionName());
-            }
-            
-            if (t.getCompetitionId() != null) {
-                existing.setCompetitionId(t.getCompetitionId());
-            }
-            
             if (t.getCompetitionGroupSetting() != null) {
                 existing.setCompetitionGroupSetting(t.getCompetitionGroupSetting());
             }
             
-            if (t.getEventDate() != null) {
+            if (t.getEventDate()!= null) {
                 existing.setEventDate(t.getEventDate());
             }
-            
-            if (t.getEventId() != null) {
-                existing.setEventId(t.getEventId());
-            }
-            
-            if (t.getHome() != null) {
-                existing.setHome(t.getHome());
-            }
-            
-            if (t.getAway() != null) {
-                existing.setAway(t.getAway());
-            }
-            
-            if (t.getIsRB() != null) {
-                existing.setIsRB(t.getIsRB());
-            }
-            
+           
             return eventRepository.save(existing);
         }
         

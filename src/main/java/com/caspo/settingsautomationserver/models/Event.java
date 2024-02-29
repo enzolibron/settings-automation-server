@@ -41,6 +41,9 @@ public class Event {
     @Convert(converter = CompetitionGroupSettingConverter.class)
     @Column(name = "competition_group_setting", length = 1000)
     private CompetitionGroupSetting competitionGroupSetting;
+    
+    @Transient
+    private String competitionGroupSettingName;
 
     @Column(name = "away")
     private String away;
