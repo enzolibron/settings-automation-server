@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 public class ChildEvent {
 
-    private int eventID;
+    private Integer eventID;
     private String competitionName;
     private String eventName;
     private String childEventType;

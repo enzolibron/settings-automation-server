@@ -1,14 +1,17 @@
 package com.caspo.settingsautomationserver.services;
 
 import com.caspo.settingsautomationserver.ScheduledEventsStorage;
+import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
 import com.caspo.settingsautomationserver.daos.EventDao;
 import com.caspo.settingsautomationserver.daos.MarginDao;
 import com.caspo.settingsautomationserver.dtos.EventBetholdRequestDto;
 import com.caspo.settingsautomationserver.ec.GetEsportEvents;
 import com.caspo.settingsautomationserver.enums.SportId;
+import com.caspo.settingsautomationserver.models.ChildEvent;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
 import com.caspo.settingsautomationserver.models.Margin;
+import com.caspo.settingsautomationserver.models.ParentChildSetting;
 import com.caspo.settingsautomationserver.utils.DateUtil;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -22,6 +25,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
@@ -43,6 +47,7 @@ public class EventSettingService {
     private final GetEsportEvents getEsportEvents;
     private final EventDao eventDao;
     private final MarginDao marginDao;
+    private final CompetitionGroupSettingDao competitionGroupSettingDao;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -118,7 +123,7 @@ public class EventSettingService {
                 for (Object item : propsJsonArray) {
                     JSONObject jsonObject = (JSONObject) item;
                     Optional<Margin> margin = margins.stream()
-                            .filter(x -> x.getBetTypeName().equals(Integer.valueOf((String) jsonObject.get("propositionName"))))
+                            .filter(x -> x.getBetTypeName().equals((String) jsonObject.get("propositionName")))
                             .findAny();
 
                     if (margin.isPresent()) {
@@ -167,7 +172,10 @@ public class EventSettingService {
                     JSONObject betTypeJsonObject = (JSONObject) item;
 
                     Optional<Margin> margin = margins.stream()
-                            .filter(x -> x.getBetTypeName().equals((String) betTypeJsonObject.get("name")))
+                            .filter(x -> x.getBetTypeName().equals((String) betTypeJsonObject.get("name")) 
+//                                    is not proposition
+                                    && ((long) betTypeJsonObject.get("bettypeId")) != 19L 
+                                    && ((long) betTypeJsonObject.get("bettypeId")) != 17L)
                             .findAny();
 
                     if (margin.isPresent()) {
@@ -254,6 +262,7 @@ public class EventSettingService {
 
         });
 
+        //process parent events
         List<Event> toScheduleEventList = eventDao.getAll()
                 .stream()
                 .map(event -> {
@@ -261,14 +270,44 @@ public class EventSettingService {
                     setNewMatchSetting(event);
                     event.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(event));
                     event.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(event));
+
+                    processChildEvents(event);
+
                     return event;
 
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-
         ScheduledEventsStorage.get().addAll(toScheduleEventList);
+    }
 
+    private void processChildEvents(Event parentEvent) {
+
+        gmmService.getChildEvent(parentEvent.getEventId()).stream().forEach(child -> {
+            Event newChildEvent = new Event();
+            newChildEvent.setEventId(child.getEventID().toString());
+            newChildEvent.setAway(parentEvent.getAway());
+            newChildEvent.setHome(parentEvent.getHome());
+            newChildEvent.setCompetitionName(child.getCompetitionName());
+            newChildEvent.setEventDate(parentEvent.getEventDate());
+
+            ParentChildSetting parentChildSetting = competitionGroupSettingDao.getParentChildSettingByCompetitionId(Long.valueOf(parentEvent.getCompetitionId()));
+
+            if (parentChildSetting != null) {
+                System.out.println(parentChildSetting);
+                CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getParent());
+
+                if (competitionGroupSettingParent != null) {
+                    System.out.println(competitionGroupSettingParent);
+                    newChildEvent.setCompetitionGroupSetting(competitionGroupSettingParent);
+
+                }
+            }
+
+            setNewMatchSetting(newChildEvent);
+            newChildEvent.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(newChildEvent));
+            newChildEvent.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(newChildEvent));
+        });
     }
 
 }

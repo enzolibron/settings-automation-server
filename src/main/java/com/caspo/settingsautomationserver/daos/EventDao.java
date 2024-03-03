@@ -56,7 +56,7 @@ public class EventDao implements Dao<Event> {
                 existing.setCompetitionGroupSetting(t.getCompetitionGroupSetting());
             }
             
-            if (t.getEventDate()!= null) {
+            if (t.getEventDate() != null) {
                 existing.setEventDate(t.getEventDate());
             }
            

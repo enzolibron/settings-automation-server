@@ -31,10 +31,10 @@ public class Event {
 
     @Column(name = "competition_name")
     private String competitionName;
-    
+
     @Transient
     private ScheduledFuture<?> kickoffTimeMinusTodayScheduledTask;
-    
+
     @Transient
     private ScheduledFuture<?> kickoffTimeScheduledTask;
 
