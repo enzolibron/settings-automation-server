@@ -96,11 +96,9 @@ public class GetEsportEvents {
                 ParentChildSetting parentChildSetting = competitionGroupSettingDao.getParentChildSettingByCompetitionId(Long.valueOf(newEvent.getCompetitionId()));
 
                 if (parentChildSetting != null) {
-                    System.out.println(parentChildSetting);
                     CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getParent());
 
                     if (competitionGroupSettingParent != null) {
-                        System.out.println(competitionGroupSettingParent);
                         newEvent.setCompetitionGroupSetting(competitionGroupSettingParent);
                         eventList.add(newEvent);
 

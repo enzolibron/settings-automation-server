@@ -123,7 +123,7 @@ public class EventSettingService {
                 for (Object item : propsJsonArray) {
                     JSONObject jsonObject = (JSONObject) item;
                     Optional<Margin> margin = margins.stream()
-                            .filter(x -> x.getBetTypeName().equals((String) jsonObject.get("propositionName")))
+                            .filter(x -> x.getBetTypeName().equals((String) jsonObject.get("propositionName")) && x.getIsRbMarket().equals((int)(long) jsonObject.get("isRB")))
                             .findAny();
 
                     if (margin.isPresent()) {
@@ -163,17 +163,14 @@ public class EventSettingService {
             String[] orgSpread = gmmService.getOrgSpread(event.getEventId());
             JSONObject resultJsonObject = (JSONObject) jsonParser.parse(orgSpread[1]);
             JSONObject responseJSONObject = (JSONObject) resultJsonObject.get("Response");
-            margins.stream().forEach(item -> System.out.println(item));
             if (responseJSONObject != null) {
-
                 JSONArray marketLines = (JSONArray) jsonParser.parse(responseJSONObject.get("withoutSpreadMarketline").toString());
 
                 for (Object item : marketLines) {
                     JSONObject betTypeJsonObject = (JSONObject) item;
-
                     Optional<Margin> margin = margins.stream()
                             .filter(x -> x.getBetTypeName().equals((String) betTypeJsonObject.get("name")) 
-//                                    is not proposition
+//                                    is not proposition (bet type 19, 17 is proposition)
                                     && ((long) betTypeJsonObject.get("bettypeId")) != 19L 
                                     && ((long) betTypeJsonObject.get("bettypeId")) != 17L)
                             .findAny();
@@ -266,15 +263,11 @@ public class EventSettingService {
         List<Event> toScheduleEventList = eventDao.getAll()
                 .stream()
                 .map(event -> {
-
                     setNewMatchSetting(event);
                     event.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(event));
                     event.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(event));
-
                     processChildEvents(event);
-
                     return event;
-
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -294,13 +287,9 @@ public class EventSettingService {
             ParentChildSetting parentChildSetting = competitionGroupSettingDao.getParentChildSettingByCompetitionId(Long.valueOf(parentEvent.getCompetitionId()));
 
             if (parentChildSetting != null) {
-                System.out.println(parentChildSetting);
-                CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getParent());
-
+                CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getSpecials());
                 if (competitionGroupSettingParent != null) {
-                    System.out.println(competitionGroupSettingParent);
                     newChildEvent.setCompetitionGroupSetting(competitionGroupSettingParent);
-
                 }
             }
 
