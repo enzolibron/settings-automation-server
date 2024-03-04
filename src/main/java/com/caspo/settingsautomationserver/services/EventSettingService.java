@@ -123,14 +123,11 @@ public class EventSettingService {
                 for (Object item : propsJsonArray) {
                     JSONObject jsonObject = (JSONObject) item;
                     Optional<Margin> margin = margins.stream()
-                            .filter(x -> x.getBetTypeName().equals((String) jsonObject.get("propositionName")) && x.getIsRbMarket().equals((int)(long) jsonObject.get("isRB")))
+                            .filter(x -> x.getBetTypeName().equals((String) jsonObject.get("propositionName")) && x.getIsRbMarket().equals((int) (long) jsonObject.get("isRB")))
                             .findAny();
 
                     if (margin.isPresent()) {
                         gmmService.setMarginByMarketLineName(Integer.valueOf(eventId), margin.get().getBetTypeName(), margin.get().getMarketTypeId(), margin.get().getMargin());
-
-                    } else {
-                        Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "bet type nae: {0} not found", jsonObject.get("propositionName"));
                     }
 
                 }
@@ -169,16 +166,14 @@ public class EventSettingService {
                 for (Object item : marketLines) {
                     JSONObject betTypeJsonObject = (JSONObject) item;
                     Optional<Margin> margin = margins.stream()
-                            .filter(x -> x.getBetTypeName().equals((String) betTypeJsonObject.get("name")) 
-//                                    is not proposition (bet type 19, 17 is proposition)
-                                    && ((long) betTypeJsonObject.get("bettypeId")) != 19L 
-                                    && ((long) betTypeJsonObject.get("bettypeId")) != 17L)
+                            .filter(x -> x.getBetTypeName().equals((String) betTypeJsonObject.get("name"))
+                            //                                    is not proposition (bet type 19, 17 is proposition)
+                            && ((long) betTypeJsonObject.get("bettypeId")) != 19L
+                            && ((long) betTypeJsonObject.get("bettypeId")) != 17L)
                             .findAny();
 
                     if (margin.isPresent()) {
                         gmmService.setMarginByMarketType(event.getEventId(), margin.get().getMarketTypeId(), margin.get().getMargin());
-                    } else {
-                        Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "bet type name: {0} not found", betTypeJsonObject.get("name"));
                     }
 
                 }
@@ -259,7 +254,7 @@ public class EventSettingService {
 
         });
 
-        //process parent events
+        //process events
         List<Event> toScheduleEventList = eventDao.getAll()
                 .stream()
                 .map(event -> {
@@ -274,7 +269,7 @@ public class EventSettingService {
         ScheduledEventsStorage.get().addAll(toScheduleEventList);
     }
 
-    private void processChildEvents(Event parentEvent) {
+    public void processChildEvents(Event parentEvent) {
 
         gmmService.getChildEvent(parentEvent.getEventId()).stream().forEach(child -> {
             Event newChildEvent = new Event();
@@ -296,6 +291,34 @@ public class EventSettingService {
             setNewMatchSetting(newChildEvent);
             newChildEvent.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(newChildEvent));
             newChildEvent.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(newChildEvent));
+            ScheduledEventsStorage.get().add(newChildEvent);
+        });
+    }
+
+    //for kafka process
+    public void updateChildEventsTask(Event parentEvent) {
+
+        gmmService.getChildEvent(parentEvent.getEventId()).stream().forEach(child -> {
+            Event childEventToBeUpdated = ScheduledEventsStorage.get().getEvents().stream()
+                    .filter(item -> item.getEventId().equalsIgnoreCase(child.getEventID().toString()))
+                    .findFirst()
+                    .orElse(null);
+
+            int eventIndex = ScheduledEventsStorage.get().getIndex(childEventToBeUpdated);
+
+            //cancel previous scheduled task
+            childEventToBeUpdated.getKickoffTimeMinusTodayScheduledTask().cancel(false);
+            childEventToBeUpdated.getKickoffTimeScheduledTask().cancel(false);
+
+            //update and save
+            childEventToBeUpdated.setEventDate(parentEvent.getEventDate());
+
+            //set new scheduled task
+            childEventToBeUpdated.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(childEventToBeUpdated));
+            childEventToBeUpdated.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(childEventToBeUpdated));
+
+            ScheduledEventsStorage.get().updateEvent(eventIndex, childEventToBeUpdated);
+
         });
     }
 
