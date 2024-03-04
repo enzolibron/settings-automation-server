@@ -36,5 +36,8 @@ public class Margin {
 
     @Column(name = "margin")
     private Double margin;
+    
+    @Column(name = "is_rb_market")
+    private Integer isRbMarket;
 
 }

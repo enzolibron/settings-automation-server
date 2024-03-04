@@ -1,7 +1,6 @@
 package com.caspo.settingsautomationserver.dtos;
 
 import com.caspo.settingsautomationserver.models.Margin;
-import java.util.UUID;
 import lombok.Data;
 
 /**
@@ -18,6 +17,7 @@ public class MarginDto implements Dto<Margin> {
     private Integer betTypeId;
     private Integer marketTypeId;
     private Double margin;
+    private Integer isRbMarket;
 
     @Override
     public Margin dtoToEntity() {
@@ -29,6 +29,7 @@ public class MarginDto implements Dto<Margin> {
         entity.setMarginGroupName(this.marginGroupName);
         entity.setMarketTypeId(this.marketTypeId);
         entity.setSportId(this.sportId);
+        entity.setIsRbMarket(this.isRbMarket);
         
         return entity;
     }

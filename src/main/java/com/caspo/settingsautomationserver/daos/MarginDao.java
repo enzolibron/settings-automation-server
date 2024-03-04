@@ -70,6 +70,10 @@ public class MarginDao {
                     existing.get().setSportId(margin.getSportId());
                 }
                 
+                if(margin.getIsRbMarket() != null) {
+                    existing.get().setIsRbMarket(margin.getIsRbMarket());
+                }
+                
                 return marginRepository.save(existing.get());
             } else {
                 return null;

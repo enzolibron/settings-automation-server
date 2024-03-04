@@ -33,7 +33,7 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
             Logger.getLogger(SettingsAutomationServerApplication.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-//        kConsumer.startConsumer();
+        kConsumer.startConsumer();
     }
 
 }
