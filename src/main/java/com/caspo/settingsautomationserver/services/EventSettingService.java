@@ -68,7 +68,7 @@ public class EventSettingService {
         //schedule task for kickoff time - today
         Runnable kickoffTimeMinusTodaytask = () -> {
 
-            System.out.println(new Date() + ": Running kickoffTimeMinusTodaytask for event: " + event.getEventId());
+            Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "Running kickoffTimeMinusTodaytask for event: {0}", event.getEventId());
             setMtsgpByMtsgforToday(event, event.getCompetitionGroupSetting());
             //non-proposition
             setMarginByMarketType(event, event.getCompetitionGroupSetting().getStraightTodayMarginGroupName());
@@ -89,7 +89,7 @@ public class EventSettingService {
         //schedule task for kickoff
         Runnable kickoffTask = () -> {
             try {
-                System.out.println(new Date() + ": Running kickoffTask for event: " + event.getEventId());
+                Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "Running kickoffTask for event: {0}", event.getEventId());
                 TimeUnit.SECONDS.sleep(10);
 
                 setEventBetHold(event, event.getCompetitionGroupSetting());
@@ -237,7 +237,7 @@ public class EventSettingService {
         List<Event> eventListFromEc = null;
 
         while (eventListFromEc == null) {
-            System.out.println(new Date() + " retrying to retrieve events... ");
+            Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "retrying to retrieve events... ");
             eventListFromEc = getEsportEvents.getEvents();
             TimeUnit.SECONDS.sleep(5);
         }

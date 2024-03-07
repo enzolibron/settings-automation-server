@@ -72,14 +72,14 @@ public class KConsumer {
 
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(1500);
-                System.out.println(new Date() + ": listening for updates in " + this.topicName);
-                System.out.println("EventScheduledStorage(Parent + Child) Size: " + ScheduledEventsStorage.get().getEvents().size());
+                Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "listening for updates in " + this.topicName);
+                Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "EventScheduledStorage(Parents and Children) Size: {0}", ScheduledEventsStorage.get().getEvents().size());
 
                 for (ConsumerRecord<String, String> record : records) {
                     try {
                         Event newEventPush = processRecord(record);
                         if (newEventPush != null) {
-                            System.out.println(new Date() + "New KConsumer record: " + newEventPush.toString());
+                            Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "New KConsumer record: {0}", newEventPush.toString());                          
                         }
 
                     } catch (JsonProcessingException ex) {
@@ -138,8 +138,13 @@ public class KConsumer {
             int eventIndex = ScheduledEventsStorage.get().getIndex(event);
 
             //cancel previous scheduled task
-            event.getKickoffTimeMinusTodayScheduledTask().cancel(false);
-            event.getKickoffTimeScheduledTask().cancel(false);
+            if (event.getKickoffTimeMinusTodayScheduledTask() != null) {
+                event.getKickoffTimeMinusTodayScheduledTask().cancel(false);
+            }
+
+            if (event.getKickoffTimeScheduledTask() != null) {
+                event.getKickoffTimeScheduledTask().cancel(false);
+            }
 
             //update and save
             event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));

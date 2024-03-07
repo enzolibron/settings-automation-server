@@ -44,6 +44,12 @@ public class ScheduledEventsStorage {
         events.add(newEvent);
     }
     
+    public void remove(Event event) {
+        int eventIndex = getIndex(event);
+        
+        events.remove(eventIndex);
+    }
+    
     public List<Event> getEvents() {
         return events;
     }
