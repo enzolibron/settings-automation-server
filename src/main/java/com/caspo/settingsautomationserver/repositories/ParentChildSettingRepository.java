@@ -10,5 +10,7 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ParentChildSettingRepository extends JpaRepository<ParentChildSetting, String> {
+
+    ParentChildSetting findByTypeIgnoreCaseAndSettingNameIgnoreCaseAndSportId(String type, String settingName, Integer sportId);
     
 }

@@ -1,6 +1,8 @@
 package com.caspo.settingsautomationserver.daos;
 
+import com.caspo.settingsautomationserver.models.Competition;
 import com.caspo.settingsautomationserver.models.ParentChildSetting;
+import com.caspo.settingsautomationserver.repositories.CompetitionRepository;
 import com.caspo.settingsautomationserver.repositories.ParentChildSettingRepository;
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class ParentChildSettingDao implements Dao<ParentChildSetting> {
 
     private final ParentChildSettingRepository parentChildSettingRepository;
+    private final CompetitionRepository competitionRepository;
 
     @Override
     public ParentChildSetting get(Object name) {
@@ -42,25 +45,6 @@ public class ParentChildSettingDao implements Dao<ParentChildSetting> {
         ParentChildSetting existing = get(param);
 
         if (existing != null) {
-            if (t.getSpecials() != null) {
-                existing.setSpecials(t.getSpecials());
-            }
-
-            if (t.getParent() != null) {
-                existing.setParent(t.getParent());
-            }
-
-            if (t.getKills() != null) {
-                existing.setKills(t.getKills());
-            }
-
-            if (t.getHomeKills() != null) {
-                existing.setHomeKills(t.getHomeKills());
-            }
-
-            if (t.getAwayKills() != null) {
-                existing.setAwayKills(t.getAwayKills());
-            }
 
             return parentChildSettingRepository.save(existing);
         }
@@ -69,12 +53,32 @@ public class ParentChildSettingDao implements Dao<ParentChildSetting> {
 
     @Override
     public String delete(Object name) {
-       ParentChildSetting existing = get(name);
+        ParentChildSetting existing = get(name);
         if (existing == null) {
             return null;
         } else {
             parentChildSettingRepository.delete(existing);
             return "Deleted successfully.";
-        }    }
+        }
+    }
+    
+
+    public ParentChildSetting getParentChildSettingByCompetitionIdAndType(Long id, String type, Integer sportId) {
+
+        Optional<Competition> competition = competitionRepository.findById(id);
+
+        if (competition.isPresent()) {
+            ParentChildSetting setting = parentChildSettingRepository.findByTypeIgnoreCaseAndSettingNameIgnoreCaseAndSportId(type, competition.get().getSettings(), sportId);
+
+            if (setting != null) {
+                return setting;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+
+    }
 
 }

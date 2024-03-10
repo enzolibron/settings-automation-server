@@ -2,6 +2,8 @@ package com.caspo.settingsautomationserver.models;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import lombok.Data;
 
@@ -14,22 +16,19 @@ import lombok.Data;
 public class ParentChildSetting {
 
     @Id
-    @Column(name = "setting")
-    private String setting;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(name = "parent")
-    private String parent;
+    @Column(name = "sport_id")
+    private Integer sportId;
 
-    @Column(name = "specials")
-    private String specials;
+    @Column(name = "type")
+    private String type;
 
-    @Column(name = "kills")
-    private String kills;
+    @Column(name = "setting_name")
+    private String settingName;
 
-    @Column(name = "home_kills")
-    private String homeKills;
-
-    @Column(name = "away_kills")
-    private String awayKills;
+    @Column(name = "competition_group_setting_name")
+    private String competitionGroupSettingName;
 
 }

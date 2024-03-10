@@ -1,10 +1,7 @@
 package com.caspo.settingsautomationserver.daos;
 
-import com.caspo.settingsautomationserver.models.Competition;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
-import com.caspo.settingsautomationserver.models.ParentChildSetting;
 import com.caspo.settingsautomationserver.repositories.CompetitionGroupSettingRepository;
-import com.caspo.settingsautomationserver.repositories.CompetitionRepository;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +16,6 @@ import org.springframework.stereotype.Service;
 public class CompetitionGroupSettingDao implements Dao<CompetitionGroupSetting> {
 
     private final CompetitionGroupSettingRepository competitionGroupSettingRepository;
-    private final CompetitionRepository competitionRepository;
-    private final ParentChildSettingDao parentChildSettingDao;
 
     @Override
     public CompetitionGroupSetting get(Object id) {
@@ -103,25 +98,6 @@ public class CompetitionGroupSettingDao implements Dao<CompetitionGroupSetting> 
             competitionGroupSettingRepository.delete(existing);
             return "Deleted successfully.";
         }
-
-    }
-
-    public ParentChildSetting getParentChildSettingByCompetitionId(Long id) {
-
-        Optional<Competition> competition = competitionRepository.findById(id);
-
-        if (competition.isPresent()) {
-            ParentChildSetting setting = parentChildSettingDao.get(competition.get().getSettings());
-
-            if (setting != null) {
-                return setting;
-            } else {
-                return null;
-            }
-        } else {
-            return null;
-        }
-
     }
 
 }

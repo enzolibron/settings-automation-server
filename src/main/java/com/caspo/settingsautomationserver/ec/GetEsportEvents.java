@@ -36,6 +36,7 @@ public class GetEsportEvents {
     private final int SPORTID = 23;
     private final String GMMURL = EcUrl.UAT.url;
     private final JSONParser parser = new JSONParser();
+    private final ParentChildSettingDao parentChildSettingDao;
     private final CompetitionGroupSettingDao competitionGroupSettingDao;
 
     public List<Event> getEvents() throws IOException {
@@ -92,11 +93,12 @@ public class GetEsportEvents {
                 newEvent.setCompetitionName(jsonObject.get("gmmCompetition").toString());
                 newEvent.setAway(jsonObject.get("gmmAway").toString());
                 newEvent.setHome(jsonObject.get("gmmHome").toString());
-
-                ParentChildSetting parentChildSetting = competitionGroupSettingDao.getParentChildSettingByCompetitionId(Long.valueOf(newEvent.getCompetitionId()));
+                
+                newEvent.setType("parent");
+                ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndType(Long.valueOf(newEvent.getCompetitionId()), newEvent.getType(), 23);
 
                 if (parentChildSetting != null) {
-                    CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getParent());
+                    CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getCompetitionGroupSettingName());
 
                     if (competitionGroupSettingParent != null) {
                         newEvent.setCompetitionGroupSetting(competitionGroupSettingParent);

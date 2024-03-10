@@ -3,6 +3,7 @@ package com.caspo.settingsautomationserver.kafka;
 import com.caspo.settingsautomationserver.ScheduledEventsStorage;
 import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
 import com.caspo.settingsautomationserver.daos.EventDao;
+import com.caspo.settingsautomationserver.daos.ParentChildSettingDao;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.EcPushFeedEventDto;
 import com.caspo.settingsautomationserver.models.Event;
@@ -47,6 +48,9 @@ public class KConsumer {
     private CompetitionGroupSettingDao competitionGroupSettingDao;
 
     @Autowired
+    private ParentChildSettingDao parentChildSettingDao;
+
+    @Autowired
     private EventDao eventDao;
 
     private final static String BOOTSTRAP_SERVERS_UAT = "10.12.8.146:9092,10.12.8.147:9092,10.12.8.148:9092";
@@ -79,7 +83,7 @@ public class KConsumer {
                     try {
                         Event newEventPush = processRecord(record);
                         if (newEventPush != null) {
-                            Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "New KConsumer record: {0}", newEventPush.toString());                          
+                            Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "New KConsumer record: {0}", newEventPush.toString());
                         }
 
                     } catch (JsonProcessingException ex) {
@@ -102,9 +106,9 @@ public class KConsumer {
 
         if (ecPushFeedEventDto.getEventid() != null) {
             //statement block for new events
-            ParentChildSetting parentChildSetting = competitionGroupSettingDao.getParentChildSettingByCompetitionId(Long.valueOf(ecPushFeedEventDto.getCompetition().getId()));
+            ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndType(Long.valueOf(ecPushFeedEventDto.getCompetition().getId()), "parent", 23);
             if (parentChildSetting != null) {
-                CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getParent());
+                CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getCompetitionGroupSettingName());
 
                 if (competitionGroupSettingParent != null) {
                     event = new Event();

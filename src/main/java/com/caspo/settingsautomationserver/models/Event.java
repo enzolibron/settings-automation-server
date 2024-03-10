@@ -50,5 +50,8 @@ public class Event {
 
     @Column(name = "home")
     private String home;
+    
+    @Transient
+    private String type;
 
 }

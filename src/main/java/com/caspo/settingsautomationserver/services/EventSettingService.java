@@ -4,10 +4,10 @@ import com.caspo.settingsautomationserver.ScheduledEventsStorage;
 import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
 import com.caspo.settingsautomationserver.daos.EventDao;
 import com.caspo.settingsautomationserver.daos.MarginDao;
+import com.caspo.settingsautomationserver.daos.ParentChildSettingDao;
 import com.caspo.settingsautomationserver.dtos.EventBetholdRequestDto;
 import com.caspo.settingsautomationserver.ec.GetEsportEvents;
 import com.caspo.settingsautomationserver.enums.SportId;
-import com.caspo.settingsautomationserver.models.ChildEvent;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
 import com.caspo.settingsautomationserver.models.Margin;
@@ -25,7 +25,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
@@ -48,6 +47,7 @@ public class EventSettingService {
     private final EventDao eventDao;
     private final MarginDao marginDao;
     private final CompetitionGroupSettingDao competitionGroupSettingDao;
+    private final ParentChildSettingDao parentChildSettingDao;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -278,13 +278,14 @@ public class EventSettingService {
             newChildEvent.setHome(parentEvent.getHome());
             newChildEvent.setCompetitionName(child.getCompetitionName());
             newChildEvent.setEventDate(parentEvent.getEventDate());
-
-            ParentChildSetting parentChildSetting = competitionGroupSettingDao.getParentChildSettingByCompetitionId(Long.valueOf(parentEvent.getCompetitionId()));
+            
+            newChildEvent.setType(child.getCompetitionName().substring(child.getCompetitionName().lastIndexOf(" ")+1));
+            ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndType(Long.valueOf(parentEvent.getCompetitionId()), newChildEvent.getType(), 23);
 
             if (parentChildSetting != null) {
-                CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getSpecials());
-                if (competitionGroupSettingParent != null) {
-                    newChildEvent.setCompetitionGroupSetting(competitionGroupSettingParent);
+                CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.get(parentChildSetting.getCompetitionGroupSettingName());
+                if (competitionGroupSetting != null) {
+                    newChildEvent.setCompetitionGroupSetting(competitionGroupSetting);
                 }
             }
 

@@ -10,23 +10,21 @@ import lombok.Data;
 @Data
 public class ParentChildSettingDto implements Dto<ParentChildSetting> {
 
-    private String setting;
-    private String parent;
-    private String specials;
-    private String kills;
-    private String homeKills;
-    private String awayKills;
+    private Long id;
+    private Integer sportId;
+    private String type;
+    private String settingName;
+    private String competitionGroupSettingName;
 
     @Override
     public ParentChildSetting dtoToEntity() {
         ParentChildSetting entity = new ParentChildSetting();
 
-        entity.setSetting(this.getSetting());
-        entity.setParent(this.getParent());
-        entity.setSpecials(this.getSpecials());
-        entity.setKills(this.getKills());
-        entity.setHomeKills(this.getHomeKills());
-        entity.setAwayKills(this.getAwayKills());
+        entity.setId(this.getId());
+        entity.setSportId(this.getSportId());
+        entity.setType(this.getType());
+        entity.setSettingName(this.getSettingName());
+        entity.setCompetitionGroupSettingName(this.getCompetitionGroupSettingName());
 
         return entity;
     }
