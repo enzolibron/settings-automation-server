@@ -139,28 +139,31 @@ public class KConsumer {
                     .findFirst()
                     .orElse(null);
 
-            int eventIndex = ScheduledEventsStorage.get().getIndex(event);
+            if (event != null) {
+                int eventIndex = ScheduledEventsStorage.get().getIndex(event);
 
-            //cancel previous scheduled task
-            if (event.getKickoffTimeMinusTodayScheduledTask() != null) {
-                event.getKickoffTimeMinusTodayScheduledTask().cancel(false);
+                //cancel previous scheduled task
+                if (event.getKickoffTimeMinusTodayScheduledTask() != null) {
+                    event.getKickoffTimeMinusTodayScheduledTask().cancel(false);
+                }
+
+                if (event.getKickoffTimeScheduledTask() != null) {
+                    event.getKickoffTimeScheduledTask().cancel(false);
+                }
+
+                //update and save
+                event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
+
+                //set new scheduled task
+                event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
+                event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
+
+                eventSettingService.updateChildEventsTask(event);
+
+                ScheduledEventsStorage.get().updateEvent(eventIndex, event);
+                eventDao.update(event, event.getEventId());
             }
 
-            if (event.getKickoffTimeScheduledTask() != null) {
-                event.getKickoffTimeScheduledTask().cancel(false);
-            }
-
-            //update and save
-            event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
-
-            //set new scheduled task
-            event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
-            event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
-
-            eventSettingService.updateChildEventsTask(event);
-
-            ScheduledEventsStorage.get().updateEvent(eventIndex, event);
-            eventDao.update(event, event.getEventId());
         }
 
         return event;
