@@ -267,6 +267,7 @@ public class EventSettingService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         ScheduledEventsStorage.get().addAll(toScheduleEventList);
+
     }
 
     public void processChildEvents(Event parentEvent) {
@@ -278,8 +279,8 @@ public class EventSettingService {
             newChildEvent.setHome(parentEvent.getHome());
             newChildEvent.setCompetitionName(child.getCompetitionName());
             newChildEvent.setEventDate(parentEvent.getEventDate());
-            
-            newChildEvent.setType(child.getCompetitionName().substring(child.getCompetitionName().lastIndexOf(" ")+1));
+
+            newChildEvent.setType(child.getCompetitionName().substring(child.getCompetitionName().lastIndexOf(" ") + 1));
             ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndTypeAndSportId(Long.valueOf(parentEvent.getCompetitionId()), newChildEvent.getType(), 23);
 
             if (parentChildSetting != null) {
