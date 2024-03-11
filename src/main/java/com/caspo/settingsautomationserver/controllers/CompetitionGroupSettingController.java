@@ -56,9 +56,9 @@ public class CompetitionGroupSettingController {
 
     }
 
-    @PutMapping("/{name}")
-    public ResponseEntity updateByName(@PathVariable String name, @RequestBody CompetitionGroupSettingRequestDto request) {
-        CompetitionGroupSetting result = competitionGroupSettingDao.update(request.dtoToEntity(), name);
+    @PutMapping
+    public ResponseEntity updateByName(@RequestBody CompetitionGroupSettingRequestDto request) {
+        CompetitionGroupSetting result = competitionGroupSettingDao.update(request.dtoToEntity(), request.getName());
 
         if (result != null) {
             return new ResponseEntity(result, HttpStatus.OK);
