@@ -53,9 +53,9 @@ public class CompetitionController {
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity updateById(@PathVariable Long id, @RequestBody CompetitionRequestDto request) {
-        Competition result = competitionDao.update(request.dtoToEntity(), id);
+    @PutMapping
+    public ResponseEntity update(@RequestBody CompetitionRequestDto request) {
+        Competition result = competitionDao.update(request.dtoToEntity(), request.getId());
 
         if (result != null) {
             return new ResponseEntity(result, HttpStatus.OK);
