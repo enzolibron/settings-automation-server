@@ -88,6 +88,9 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <verbose>true</verbose>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
