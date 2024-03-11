@@ -5,7 +5,9 @@ import com.caspo.settingsautomationserver.models.ParentChildSetting;
 import com.caspo.settingsautomationserver.repositories.CompetitionRepository;
 import com.caspo.settingsautomationserver.repositories.ParentChildSettingRepository;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +23,17 @@ public class ParentChildSettingDao implements Dao<ParentChildSetting> {
     private final CompetitionRepository competitionRepository;
 
     @Override
-    public ParentChildSetting get(Object name) {
-        Optional<ParentChildSetting> result = parentChildSettingRepository.findById((String) name);
+    public ParentChildSetting get(Object id) {
+        Optional<ParentChildSetting> result = parentChildSettingRepository.findById((Long) id);
         if (result.isPresent()) {
             return result.get();
         } else {
             return null;
         }
+    }
+    
+    public List<ParentChildSetting> getBySettingNameAndSportId(String name, Integer sportId) {
+        return parentChildSettingRepository.findAllBySettingNameIgnoreCaseAndSportId(name, sportId);
     }
 
     @Override
@@ -41,14 +47,34 @@ public class ParentChildSettingDao implements Dao<ParentChildSetting> {
     }
 
     @Override
-    public ParentChildSetting update(ParentChildSetting t, Object param) {
-        ParentChildSetting existing = get(param);
+    public ParentChildSetting update(ParentChildSetting t, Object id) {
+        ParentChildSetting existing = get(t.getId());
 
         if (existing != null) {
+            
+            if(t.getCompetitionGroupSettingName() != null) {
+                existing.setCompetitionGroupSettingName(t.getCompetitionGroupSettingName());
+            }
+            
+            if(t.getSettingName() != null) {
+                existing.setSettingName(t.getSettingName());
+            }
+            
+            if(t.getSportId() != null) {
+                existing.setSportId(t.getSportId());
+            }
+            
+            if(t.getType() != null) {
+                existing.setType(t.getType());
+            }
 
             return parentChildSettingRepository.save(existing);
         }
         return null;
+    }
+
+    public List<ParentChildSetting> batchUpdate(List<ParentChildSetting> t) {
+        return t.stream().map(item -> update(item, item.getId())).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     @Override
@@ -61,9 +87,8 @@ public class ParentChildSettingDao implements Dao<ParentChildSetting> {
             return "Deleted successfully.";
         }
     }
-    
 
-    public ParentChildSetting getParentChildSettingByCompetitionIdAndType(Long id, String type, Integer sportId) {
+    public ParentChildSetting getParentChildSettingByCompetitionIdAndTypeAndSportId(Long id, String type, Integer sportId) {
 
         Optional<Competition> competition = competitionRepository.findById(id);
 

@@ -1,6 +1,6 @@
 package com.caspo.settingsautomationserver;
 
-import com.caspo.settingsautomationserver.cron.ScheduledJobs;
+import com.caspo.settingsautomationserver.scheduled.ScheduledJobs;
 import com.caspo.settingsautomationserver.kafka.KConsumer;
 import com.caspo.settingsautomationserver.services.EventSettingService;
 import java.io.IOException;

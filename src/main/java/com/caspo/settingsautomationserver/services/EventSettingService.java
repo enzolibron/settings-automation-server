@@ -280,7 +280,7 @@ public class EventSettingService {
             newChildEvent.setEventDate(parentEvent.getEventDate());
             
             newChildEvent.setType(child.getCompetitionName().substring(child.getCompetitionName().lastIndexOf(" ")+1));
-            ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndType(Long.valueOf(parentEvent.getCompetitionId()), newChildEvent.getType(), 23);
+            ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndTypeAndSportId(Long.valueOf(parentEvent.getCompetitionId()), newChildEvent.getType(), 23);
 
             if (parentChildSetting != null) {
                 CompetitionGroupSetting competitionGroupSetting = competitionGroupSettingDao.get(parentChildSetting.getCompetitionGroupSettingName());

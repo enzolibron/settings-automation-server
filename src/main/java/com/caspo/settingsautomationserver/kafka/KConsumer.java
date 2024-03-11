@@ -106,7 +106,7 @@ public class KConsumer {
 
         if (ecPushFeedEventDto.getEventid() != null) {
             //statement block for new events
-            ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndType(Long.valueOf(ecPushFeedEventDto.getCompetition().getId()), "parent", 23);
+            ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndTypeAndSportId(Long.valueOf(ecPushFeedEventDto.getCompetition().getId()), "parent", 23);
             if (parentChildSetting != null) {
                 CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getCompetitionGroupSettingName());
 

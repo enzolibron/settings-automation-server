@@ -22,7 +22,8 @@ public class Event {
 
     @Column(name = "event_date")
     private String eventDate;
-
+    
+    //1=true, 2=false
     @Column(name = "is_rb")
     private String isRB;
 

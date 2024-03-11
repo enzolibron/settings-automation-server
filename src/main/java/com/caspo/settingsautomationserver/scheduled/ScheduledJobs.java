@@ -1,4 +1,4 @@
-package com.caspo.settingsautomationserver.cron;
+package com.caspo.settingsautomationserver.scheduled;
 
 import com.caspo.settingsautomationserver.ScheduledEventsStorage;
 import com.caspo.settingsautomationserver.daos.EventDao;
@@ -10,7 +10,6 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +28,7 @@ public class ScheduledJobs {
     private final EventDao eventDao;
 
     //every hour
-    @Scheduled(cron = "1 * * * * *")
+    @Scheduled(fixedDelay = 1000 * 60 * 60)
     public void deleteEventsThatArePast24HrsFromTheirKickoff() {
         Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "hey");
        

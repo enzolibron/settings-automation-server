@@ -3,6 +3,8 @@ package com.caspo.settingsautomationserver.controllers;
 import com.caspo.settingsautomationserver.daos.ParentChildSettingDao;
 import com.caspo.settingsautomationserver.dtos.ParentChildSettingDto;
 import com.caspo.settingsautomationserver.models.ParentChildSetting;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -43,8 +46,8 @@ public class ParentChildSettingController {
     }
 
     @GetMapping("/{name}")
-    public ResponseEntity getByName(@PathVariable String name) {
-        ParentChildSetting result = parentChildSettingDao.get(name);
+    public ResponseEntity getBySettingNameAndSportId(@RequestParam("sportId") Integer sportId, @PathVariable String name) {
+        List<ParentChildSetting> result = parentChildSettingDao.getBySettingNameAndSportId(name, sportId);
 
         if (result != null) {
             return new ResponseEntity(result, HttpStatus.OK);
@@ -53,9 +56,10 @@ public class ParentChildSettingController {
         }
     }
 
-    @PutMapping("/{name}")
-    public ResponseEntity updateByName(@PathVariable String name, @RequestBody ParentChildSettingDto request) {
-        ParentChildSetting result = parentChildSettingDao.update(request.dtoToEntity(), name);
+    @PutMapping()
+    public ResponseEntity updateByName(@RequestBody List<ParentChildSettingDto> request) {
+        List<ParentChildSetting> requestInEntity = request.stream().map(item -> item.dtoToEntity()).collect(Collectors.toList());
+        List<ParentChildSetting> result = parentChildSettingDao.batchUpdate(requestInEntity);
 
         if (result != null) {
             return new ResponseEntity(result, HttpStatus.OK);

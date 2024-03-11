@@ -95,7 +95,7 @@ public class GetEsportEvents {
                 newEvent.setHome(jsonObject.get("gmmHome").toString());
                 
                 newEvent.setType("parent");
-                ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndType(Long.valueOf(newEvent.getCompetitionId()), newEvent.getType(), 23);
+                ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndTypeAndSportId(Long.valueOf(newEvent.getCompetitionId()), newEvent.getType(), 23);
 
                 if (parentChildSetting != null) {
                     CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getCompetitionGroupSettingName());
