@@ -14,8 +14,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import java.time.Duration;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 import java.util.logging.Level;
@@ -35,28 +35,28 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class KConsumer {
-
+    
     private final JsonMapper jsonMapper = new JsonMapper();
     private final XmlMapper xmlMapper = new XmlMapper();
     private final Properties props;
     private final String topicName = "sbk-ec-mapping";
-
+    
     @Autowired
     private EventSettingService eventSettingService;
-
+    
     @Autowired
     private CompetitionGroupSettingDao competitionGroupSettingDao;
-
+    
     @Autowired
     private ParentChildSettingDao parentChildSettingDao;
-
+    
     @Autowired
     private EventDao eventDao;
-
+    
     private final static String BOOTSTRAP_SERVERS_UAT = "10.12.8.146:9092,10.12.8.147:9092,10.12.8.148:9092";
-
+    
     public KConsumer() {
-
+        
         this.props = new Properties();
         this.props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 BOOTSTRAP_SERVERS_UAT);
@@ -68,51 +68,52 @@ public class KConsumer {
         this.props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         this.jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
-
+    
     public void startConsumer() {
         new Thread(() -> {
             KafkaConsumer<String, String> consumer = new KafkaConsumer(this.props);
             consumer.subscribe(Collections.singletonList(this.topicName));
-
+            
             while (true) {
-                ConsumerRecords<String, String> records = consumer.poll(1500);
-                Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "listening for updates in " + this.topicName);
-                Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "EventScheduledStorage(Parents and Children) Size: {0}", ScheduledEventsStorage.get().getEvents().size());
-
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(1));
+//                Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "listening for updates in " + this.topicName);
+//                Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "EventScheduledStorage(Parents and Children) Size: {0}", ScheduledEventsStorage.get().getEvents().size());
+                
                 for (ConsumerRecord<String, String> record : records) {
+                    Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "New KConsumer record: {0}", record);
                     try {
                         Event newEventPush = processRecord(record);
                         if (newEventPush != null) {
                             Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "New KConsumer record: {0}", newEventPush.toString());
                         }
-
+                        
                     } catch (JsonProcessingException ex) {
                         Logger.getLogger(KConsumer.class.getName()).log(Level.SEVERE, null, ex);
                     }
-
+                    
                 }
-
+                
             }
         }).start();
-
+        
     }
-
+    
     private Event processRecord(ConsumerRecord<String, String> record) throws JsonProcessingException {
-
+        
         JSONObject json = xmlMapper.readValue(record.value(), JSONObject.class);
         EcPushFeedEventDto ecPushFeedEventDto = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), EcPushFeedEventDto.class);
-
+        
         Event event = null;
-
+        
         if (ecPushFeedEventDto.getEventid() != null) {
             //statement block for new events
             ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndTypeAndSportId(Long.valueOf(ecPushFeedEventDto.getCompetition().getId()), "parent", 23);
             if (parentChildSetting != null) {
                 CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getCompetitionGroupSettingName());
-
+                
                 if (competitionGroupSettingParent != null) {
                     event = new Event();
-
+                    
                     event.setEventId(ecPushFeedEventDto.getEventid());
                     event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
                     event.setIsRB(ecPushFeedEventDto.getIsRB());
@@ -121,24 +122,24 @@ public class KConsumer {
                     event.setCompetitionGroupSetting(competitionGroupSettingParent);
                     event.setAway(ecPushFeedEventDto.getAway().getName());
                     event.setHome(ecPushFeedEventDto.getHome().getName());
-
+                    
                     eventSettingService.setNewMatchSetting(event);
                     event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
                     event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
                     eventSettingService.processChildEvents(event);
-
+                    
                     ScheduledEventsStorage.get().add(event);
                     eventDao.save(event);
                 }
             }
-
+            
         } else {
             //statement block for new updates
             event = ScheduledEventsStorage.get().getEvents().stream()
                     .filter(item -> item.getEventId().equalsIgnoreCase(ecPushFeedEventDto.getEcEventID()))
                     .findFirst()
                     .orElse(null);
-
+            
             if (event != null) {
                 int eventIndex = ScheduledEventsStorage.get().getIndex(event);
 
@@ -146,7 +147,7 @@ public class KConsumer {
                 if (event.getKickoffTimeMinusTodayScheduledTask() != null) {
                     event.getKickoffTimeMinusTodayScheduledTask().cancel(false);
                 }
-
+                
                 if (event.getKickoffTimeScheduledTask() != null) {
                     event.getKickoffTimeScheduledTask().cancel(false);
                 }
@@ -157,16 +158,16 @@ public class KConsumer {
                 //set new scheduled task
                 event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
                 event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
-
+                
                 eventSettingService.updateChildEventsTask(event);
-
+                
                 ScheduledEventsStorage.get().updateEvent(eventIndex, event);
                 eventDao.update(event, event.getEventId());
             }
-
+            
         }
-
+        
         return event;
     }
-
+    
 }

@@ -4,6 +4,7 @@ import com.caspo.settingsautomationserver.ScheduledEventsStorage;
 import com.caspo.settingsautomationserver.daos.CompetitionDao;
 import com.caspo.settingsautomationserver.daos.EventDao;
 import com.caspo.settingsautomationserver.models.Event;
+import com.caspo.settingsautomationserver.utils.DateUtil;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -33,12 +34,12 @@ public class ScheduledJobs {
     //every hour
     @Scheduled(fixedDelay = 1000 * 60 * 60)
     public void deleteEventsThatArePast24HrsFromTheirKickoff() {
-        Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "hey");
 
         //delete event in ScheduledEventStorage
         ScheduledEventsStorage.get().getEvents().stream().forEach(event -> {
             try {
-                if (!isDateOccuredWithin24Hrs(formatter.parse(event.getEventDate()))) {
+                if (!isDateOccuredWithin24Hrs(DateUtil.add12HoursToDate(formatter.parse(event.getEventDate())))) {
+                    Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "Removing event from ScheduledEventStorage: " + event);
                     ScheduledEventsStorage.get().remove(event);
                 }
             } catch (ParseException ex) {
@@ -49,12 +50,12 @@ public class ScheduledJobs {
         //delete event in event DB
         eventDao.getAll().stream().forEach((Event event) -> {
             try {
-                if (!isDateOccuredWithin24Hrs(formatter.parse(event.getEventDate()))
+                if (!isDateOccuredWithin24Hrs(DateUtil.add12HoursToDate(formatter.parse(event.getEventDate())))
                         || competitionDao.get(Long.valueOf(event.getCompetitionId())) == null) {
+                    Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "Removing event from db: " + event);
                     eventDao.delete(event.getEventId());
                 }
 
-              
             } catch (ParseException ex) {
                 Logger.getLogger(ScheduledJobs.class.getName()).log(Level.SEVERE, null, ex);
             }
