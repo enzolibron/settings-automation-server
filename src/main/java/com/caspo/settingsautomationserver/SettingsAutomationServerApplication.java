@@ -31,8 +31,6 @@ public class SettingsAutomationServerApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         
-        scheduledJobs.deleteEventsThatArePast24HrsFromTheirKickoff();
-        
         try {
             eventSettingService.processEventsFromEc();
         } catch (IOException | InterruptedException ex) {
