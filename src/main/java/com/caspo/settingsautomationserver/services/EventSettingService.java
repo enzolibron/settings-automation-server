@@ -88,18 +88,12 @@ public class EventSettingService {
 
         //schedule task for kickoff
         Runnable kickoffTask = () -> {
-            try {
-                Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "Running kickoffTask for event: {0}", event.getEventId());
-                TimeUnit.SECONDS.sleep(10);
-
-                setEventBetHold(event, event.getCompetitionGroupSetting());
-                //non-proposition
-                setMarginByMarketType(event, event.getCompetitionGroupSetting().getIpMarginGroupName());
-                //proposition
-                setMarginByMarketLineName(event.getEventId(), event.getCompetitionGroupSetting().getIpMarginGroupName());
-            } catch (InterruptedException ex) {
-                Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            Logger.getLogger(EventSettingService.class.getName()).log(Level.INFO, "Running kickoffTask for event: {0}", event.getEventId());
+            setEventBetHold(event, event.getCompetitionGroupSetting());
+            //non-proposition
+            setMarginByMarketType(event, event.getCompetitionGroupSetting().getIpMarginGroupName());
+            //proposition
+            setMarginByMarketLineName(event.getEventId(), event.getCompetitionGroupSetting().getIpMarginGroupName());
         };
 
         Long kickoffTimeTaskPeriod = computeKickoffPeriod(event.getEventDate());
@@ -242,37 +236,46 @@ public class EventSettingService {
             TimeUnit.SECONDS.sleep(5);
         }
         //Check if event from ec is already existing in events in DB, if not, save
-        eventListFromEc.stream().forEach(eventFromEc -> {
+        List<Event> toAddToScheduledEventsStorage = eventListFromEc.stream().map(eventFromEc -> {
             Event existing = eventDao.get(eventFromEc.getEventId());
             if (existing == null) {
-                eventDao.save(eventFromEc);
+                Event newEvent = eventDao.save(eventFromEc);
+                setNewMatchSetting(newEvent);
+                processChildEvents(newEvent, true);
+                return newEvent;
             } else {
-
                 eventFromEc.setCompetitionGroupSetting(existing.getCompetitionGroupSetting());
-                eventDao.update(eventFromEc, existing.getEventId());
+                Event updatedEvent = eventDao.update(eventFromEc, existing.getEventId());
+                processChildEvents(updatedEvent, false);
+                return updatedEvent;
             }
 
-        });
+        }).map(event -> {
+            System.out.println(event);
+            event.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(event));
+            event.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(event));
+            return event;
+        }).collect(Collectors.toList());
 
-        //process events
-        List<Event> toScheduleEventList = eventDao.getAll()
-                .stream()
-                .map(event -> {
-                    setNewMatchSetting(event);
-                    event.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(event));
-                    event.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(event));
-                    processChildEvents(event);
-                    return event;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        ScheduledEventsStorage.get().addAll(toScheduleEventList);
-
+        ScheduledEventsStorage.get().addAll(toAddToScheduledEventsStorage);
     }
 
-    public void processChildEvents(Event parentEvent) {
+    public void processChildEvents(Event parentEvent, Boolean isNewMatch) {
+
+        try {
+            TimeUnit.SECONDS.sleep(10);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         gmmService.getChildEvent(parentEvent.getEventId()).stream().forEach(child -> {
+
+            try {
+                TimeUnit.SECONDS.sleep(5);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
             Event newChildEvent = new Event();
             newChildEvent.setEventId(child.getEventID().toString());
             newChildEvent.setAway(parentEvent.getAway());
@@ -290,11 +293,16 @@ public class EventSettingService {
                 }
             }
 
-            setNewMatchSetting(newChildEvent);
+            if (isNewMatch) {
+                setNewMatchSetting(newChildEvent);
+            }
+
             newChildEvent.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(newChildEvent));
             newChildEvent.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(newChildEvent));
             ScheduledEventsStorage.get().add(newChildEvent);
+
         });
+
     }
 
     //for kafka process

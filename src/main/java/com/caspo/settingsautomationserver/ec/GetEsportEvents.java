@@ -88,12 +88,16 @@ public class GetEsportEvents {
                 Event newEvent = new Event();
                 newEvent.setEventId(jsonObject.get("gmmID").toString());
                 newEvent.setEventDate(jsonObject.get("eventDate").toString().replaceAll("/", "-"));
-                newEvent.setIsRB(jsonObject.get("isRB").toString());
+                if (jsonObject.get("isRB").toString().equalsIgnoreCase("Yes")) {
+                    newEvent.setIsRB(1);
+                } else {
+                    newEvent.setIsRB(2);
+                }
                 newEvent.setCompetitionId(jsonObject.get("gmmCompetitionID").toString());
                 newEvent.setCompetitionName(jsonObject.get("gmmCompetition").toString());
                 newEvent.setAway(jsonObject.get("gmmAway").toString());
                 newEvent.setHome(jsonObject.get("gmmHome").toString());
-                
+
                 newEvent.setType("parent");
                 ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndTypeAndSportId(Long.valueOf(newEvent.getCompetitionId()), newEvent.getType(), 23);
 

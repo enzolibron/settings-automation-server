@@ -116,7 +116,7 @@ public class KConsumer {
                     
                     event.setEventId(ecPushFeedEventDto.getEventid());
                     event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
-                    event.setIsRB(ecPushFeedEventDto.getIsRB());
+                    event.setIsRB(Integer.valueOf(ecPushFeedEventDto.getIsRB()));
                     event.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
                     event.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
                     event.setCompetitionGroupSetting(competitionGroupSettingParent);
@@ -126,7 +126,7 @@ public class KConsumer {
                     eventSettingService.setNewMatchSetting(event);
                     event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
                     event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
-                    eventSettingService.processChildEvents(event);
+                    eventSettingService.processChildEvents(event, true);
                     
                     ScheduledEventsStorage.get().add(event);
                     eventDao.save(event);

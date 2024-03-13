@@ -13,7 +13,7 @@ public class EventDto implements Dto<Event> {
     private String eventId;
     private String eventDate;
     //1=true, 2=false
-    private String isRB;
+    private Integer isRB;
     private String competitionId;
     private String competitionName;
     private String competitionGroupSettingName;

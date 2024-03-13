@@ -64,7 +64,7 @@ public class ScheduledJobs {
     }
 
     public boolean isDatePast24Hrs(Date aDate) {
-        return (aDate.getTime() - System.currentTimeMillis()) < DAY;
+        return (System.currentTimeMillis() - aDate.getTime()) > DAY;
     }
 
 }

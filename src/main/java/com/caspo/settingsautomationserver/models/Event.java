@@ -25,7 +25,7 @@ public class Event {
     
     //1=true, 2=false
     @Column(name = "is_rb")
-    private String isRB;
+    private Integer isRB;
 
     @Column(name = "competition_id")
     private String competitionId;
