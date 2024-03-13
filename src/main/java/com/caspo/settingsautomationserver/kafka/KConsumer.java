@@ -80,11 +80,11 @@ public class KConsumer {
 //                Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "EventScheduledStorage(Parents and Children) Size: {0}", ScheduledEventsStorage.get().getEvents().size());
                 
                 for (ConsumerRecord<String, String> record : records) {
-                    Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "New KConsumer record: {0}", record);
+                    Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "New RAW record: {0}", record);
                     try {
                         Event newEventPush = processRecord(record);
                         if (newEventPush != null) {
-                            Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "New KConsumer record: {0}", newEventPush.toString());
+                            Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "New EVENT record: {0}", newEventPush.toString());
                         }
                         
                     } catch (JsonProcessingException ex) {

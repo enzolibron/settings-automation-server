@@ -38,8 +38,8 @@ public class ScheduledJobs {
         //delete event in ScheduledEventStorage
         ScheduledEventsStorage.get().getEvents().stream().forEach(event -> {
             try {
-                if (!isDateOccuredWithin24Hrs(DateUtil.add12HoursToDate(formatter.parse(event.getEventDate())))) {
-                    Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "Removing event from ScheduledEventStorage: " + event);
+                if (isDatePast24Hrs(DateUtil.add12HoursToDate(formatter.parse(event.getEventDate())))) {
+                    Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "Removing event from ScheduledEventStorage: {0}", event);
                     ScheduledEventsStorage.get().remove(event);
                 }
             } catch (ParseException ex) {
@@ -50,9 +50,9 @@ public class ScheduledJobs {
         //delete event in event DB
         eventDao.getAll().stream().forEach((Event event) -> {
             try {
-                if (!isDateOccuredWithin24Hrs(DateUtil.add12HoursToDate(formatter.parse(event.getEventDate())))
+                if (isDatePast24Hrs(DateUtil.add12HoursToDate(formatter.parse(event.getEventDate())))
                         || competitionDao.get(Long.valueOf(event.getCompetitionId())) == null) {
-                    Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "Removing event from db: " + event);
+                    Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "Removing event from db: {0}", event);
                     eventDao.delete(event.getEventId());
                 }
 
@@ -63,7 +63,7 @@ public class ScheduledJobs {
 
     }
 
-    public boolean isDateOccuredWithin24Hrs(Date aDate) {
+    public boolean isDatePast24Hrs(Date aDate) {
         return aDate.getTime() > System.currentTimeMillis() - DAY;
     }
 
