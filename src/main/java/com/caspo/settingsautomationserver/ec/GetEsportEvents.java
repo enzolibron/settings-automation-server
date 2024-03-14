@@ -2,6 +2,7 @@ package com.caspo.settingsautomationserver.ec;
 
 import com.caspo.settingsautomationserver.enums.EcUrl;
 import com.caspo.settingsautomationserver.daos.CompetitionGroupSettingDao;
+import com.caspo.settingsautomationserver.daos.EventDao;
 import com.caspo.settingsautomationserver.daos.ParentChildSettingDao;
 import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
@@ -38,6 +39,7 @@ public class GetEsportEvents {
     private final JSONParser parser = new JSONParser();
     private final ParentChildSettingDao parentChildSettingDao;
     private final CompetitionGroupSettingDao competitionGroupSettingDao;
+    private final EventDao eventDao;
 
     public List<Event> getEvents() throws IOException {
 
@@ -84,7 +86,7 @@ public class GetEsportEvents {
             JSONObject jsonObject = (JSONObject) item;
 
             //add to list if event has gmmID and hasn't started
-            if (!jsonObject.get("gmmID").toString().isEmpty() && computeKickoffPeriod(jsonObject.get("eventDate").toString()) > 0L) {
+            if ((!jsonObject.get("gmmID").toString().isEmpty() && computeKickoffPeriod(jsonObject.get("eventDate").toString()) > 0L) || eventDao.get(jsonObject.get("gmmID").toString()) != null) {
                 Event newEvent = new Event();
                 newEvent.setEventId(jsonObject.get("gmmID").toString());
                 newEvent.setEventDate(jsonObject.get("eventDate").toString().replaceAll("/", "-"));

@@ -1,5 +1,6 @@
 package com.caspo.settingsautomationserver.controllers;
 
+import com.caspo.settingsautomationserver.ScheduledEventsStorage;
 import com.caspo.settingsautomationserver.daos.EventDao;
 import com.caspo.settingsautomationserver.dtos.EventDto;
 import com.caspo.settingsautomationserver.models.Event;
@@ -62,6 +63,11 @@ public class EventController {
         } else {
             return new ResponseEntity("event " + eventId + " doesn't exist", HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("/scheduled")
+    public ResponseEntity getScheduledEvents() {
+        return new ResponseEntity(ScheduledEventsStorage.get().getEvents(), HttpStatus.OK);
     }
 
 }
