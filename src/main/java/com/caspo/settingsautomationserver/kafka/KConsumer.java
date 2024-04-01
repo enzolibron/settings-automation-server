@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -84,7 +85,9 @@ public class KConsumer {
                     try {
                         Event newEventPush = processRecord(record);
                         if (newEventPush != null) {
-                            Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "New EVENT record: {0}", newEventPush.toString());
+                            Logger.getLogger(KConsumer.class.getName()).log(Level.INFO, "new event record: {0}", newEventPush.toString());
+                        } else {
+                            Logger.getLogger(KConsumer.class.getName()).log(Level.SEVERE, "Fail to process new event record: {0}", record.toString());
                         }
                         
                     } catch (JsonProcessingException ex) {
@@ -100,74 +103,82 @@ public class KConsumer {
     
     private Event processRecord(ConsumerRecord<String, String> record) throws JsonProcessingException {
         
-        JSONObject json = xmlMapper.readValue(record.value(), JSONObject.class);
-        EcPushFeedEventDto ecPushFeedEventDto = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), EcPushFeedEventDto.class);
-        
-        Event event = null;
-        
-        if (ecPushFeedEventDto.getEventid() != null) {
-            //statement block for new events
-            ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndTypeAndSportId(Long.valueOf(ecPushFeedEventDto.getCompetition().getId()), "parent", 23);
-            if (parentChildSetting != null) {
-                CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getCompetitionGroupSettingName());
+        try {
+            TimeUnit.SECONDS.sleep(60);
+            
+            JSONObject json = xmlMapper.readValue(record.value(), JSONObject.class);
+            EcPushFeedEventDto ecPushFeedEventDto = jsonMapper.readValue(jsonMapper.writeValueAsString(json.get("event")), EcPushFeedEventDto.class);
+            
+            Event event = null;
+            
+            if (ecPushFeedEventDto.getEventid() != null) {
+                //statement block for new events
+                ParentChildSetting parentChildSetting = parentChildSettingDao.getParentChildSettingByCompetitionIdAndTypeAndSportId(Long.valueOf(ecPushFeedEventDto.getCompetition().getId()), "parent", 23);
+                if (parentChildSetting != null) {
+                    CompetitionGroupSetting competitionGroupSettingParent = competitionGroupSettingDao.get(parentChildSetting.getCompetitionGroupSettingName());
+                    
+                    if (competitionGroupSettingParent != null) {
+                        event = new Event();
+                        
+                        event.setEventId(ecPushFeedEventDto.getEventid());
+                        event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
+                        event.setIsRB(Integer.valueOf(ecPushFeedEventDto.getIsRB()));
+                        event.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
+                        event.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
+                        event.setCompetitionGroupSetting(competitionGroupSettingParent);
+                        event.setAway(ecPushFeedEventDto.getAway().getName());
+                        event.setHome(ecPushFeedEventDto.getHome().getName());
+                        
+                        eventSettingService.setNewMatchSetting(event);
+                        event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
+                        event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
+                        eventSettingService.processChildEvents(event, true);
+                        
+                        ScheduledEventsStorage.get().add(event);
+                        eventDao.save(event);
+                    }
+                }
                 
-                if (competitionGroupSettingParent != null) {
-                    event = new Event();
+            } else {
+                //statement block for new updates
+                event = ScheduledEventsStorage.get().getEvents().stream()
+                        .filter(item -> item.getEventId().equalsIgnoreCase(ecPushFeedEventDto.getEcEventID()))
+                        .findFirst()
+                        .orElse(null);
+                
+                if (event != null) {
+                    int eventIndex = ScheduledEventsStorage.get().getIndex(event);
                     
-                    event.setEventId(ecPushFeedEventDto.getEventid());
+                    //cancel previous scheduled task
+                    if (event.getKickoffTimeMinusTodayScheduledTask() != null) {
+                        event.getKickoffTimeMinusTodayScheduledTask().cancel(false);
+                    }
+                    
+                    if (event.getKickoffTimeScheduledTask() != null) {
+                        event.getKickoffTimeScheduledTask().cancel(false);
+                    }
+                    
+                    //update and save
                     event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
-                    event.setIsRB(Integer.valueOf(ecPushFeedEventDto.getIsRB()));
-                    event.setCompetitionId(ecPushFeedEventDto.getCompetition().getId());
-                    event.setCompetitionName(ecPushFeedEventDto.getCompetition().getName());
-                    event.setCompetitionGroupSetting(competitionGroupSettingParent);
-                    event.setAway(ecPushFeedEventDto.getAway().getName());
-                    event.setHome(ecPushFeedEventDto.getHome().getName());
                     
-                    eventSettingService.setNewMatchSetting(event);
+                    //set new scheduled task
                     event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
                     event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
-                    eventSettingService.processChildEvents(event, true);
                     
-                    ScheduledEventsStorage.get().add(event);
-                    eventDao.save(event);
+                    eventSettingService.updateChildEventsTask(event);
+                    
+                    ScheduledEventsStorage.get().updateEvent(eventIndex, event);
+                    eventDao.update(event, event.getEventId());
                 }
+                
             }
             
-        } else {
-            //statement block for new updates
-            event = ScheduledEventsStorage.get().getEvents().stream()
-                    .filter(item -> item.getEventId().equalsIgnoreCase(ecPushFeedEventDto.getEcEventID()))
-                    .findFirst()
-                    .orElse(null);
-            
-            if (event != null) {
-                int eventIndex = ScheduledEventsStorage.get().getIndex(event);
-
-                //cancel previous scheduled task
-                if (event.getKickoffTimeMinusTodayScheduledTask() != null) {
-                    event.getKickoffTimeMinusTodayScheduledTask().cancel(false);
-                }
-                
-                if (event.getKickoffTimeScheduledTask() != null) {
-                    event.getKickoffTimeScheduledTask().cancel(false);
-                }
-
-                //update and save
-                event.setEventDate(formatDateFromKafkaPushFeed(ecPushFeedEventDto.getEventDate()));
-
-                //set new scheduled task
-                event.setKickoffTimeMinusTodayScheduledTask(eventSettingService.setKickoffTimeMinusTodayScheduledTask(event));
-                event.setKickoffTimeScheduledTask(eventSettingService.setKickoffTimeScheduledTask(event));
-                
-                eventSettingService.updateChildEventsTask(event);
-                
-                ScheduledEventsStorage.get().updateEvent(eventIndex, event);
-                eventDao.update(event, event.getEventId());
-            }
-            
+            return event;
+        } catch (InterruptedException ex) {
+            Logger.getLogger(KConsumer.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
         }
         
-        return event;
     }
     
 }

@@ -14,7 +14,7 @@ import java.util.logging.Logger;
  */
 public class DateUtil {
 
-    private final static String CORRECT_FORMAT = "yyyy-MM-dd HH:mm";
+    public final static String CORRECT_FORMAT = "yyyy-MM-dd HH:mm";
 
     public static String formatDate(Date dd, String format) {
         DateFormat RecordDate = new SimpleDateFormat(format);

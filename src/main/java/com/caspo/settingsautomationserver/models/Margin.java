@@ -1,11 +1,14 @@
 package com.caspo.settingsautomationserver.models;
 
+import java.sql.Timestamp;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  *
@@ -36,8 +39,14 @@ public class Margin {
 
     @Column(name = "margin")
     private Double margin;
-    
+
     @Column(name = "is_rb_market")
     private Integer isRbMarket;
+
+    @CreationTimestamp
+    private Timestamp created;
+
+    @UpdateTimestamp
+    private Timestamp modified;
 
 }

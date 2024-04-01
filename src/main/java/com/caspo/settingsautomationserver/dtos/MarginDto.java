@@ -18,6 +18,8 @@ public class MarginDto implements Dto<Margin> {
     private Integer marketTypeId;
     private Double margin;
     private Integer isRbMarket;
+    private String created;
+    private String modified;
 
     @Override
     public Margin dtoToEntity() {
