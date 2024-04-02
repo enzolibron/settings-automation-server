@@ -30,6 +30,7 @@ public class MarginDao {
                     MarginDto newMarginDto = new MarginDto();
                     newMarginDto.setBetTypeId(item.getBetTypeId());
                     newMarginDto.setBetTypeName(item.getBetTypeName());
+                    newMarginDto.setSportId(item.getSportId());
                     newMarginDto.setId(item.getId());
                     newMarginDto.setIsRbMarket(item.getIsRbMarket());
                     newMarginDto.setMargin(item.getMargin());
