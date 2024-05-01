@@ -12,6 +12,7 @@ import com.caspo.settingsautomationserver.models.CompetitionGroupSetting;
 import com.caspo.settingsautomationserver.models.Event;
 import com.caspo.settingsautomationserver.models.Margin;
 import com.caspo.settingsautomationserver.models.ParentChildSetting;
+import com.caspo.settingsautomationserver.repositories.MarginRepository;
 import com.caspo.settingsautomationserver.utils.DateUtil;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -48,6 +49,7 @@ public class EventSettingService {
     private final MarginDao marginDao;
     private final CompetitionGroupSettingDao competitionGroupSettingDao;
     private final ParentChildSettingDao parentChildSettingDao;
+    private final MarginRepository marginRepository;
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -134,7 +136,7 @@ public class EventSettingService {
     }
 
     private void setMarginByMarketLineName(String eventId, String marginGroupName) {
-        List<Margin> margins = marginDao.getMarginsByGroupName(marginGroupName);
+        List<Margin> margins = marginRepository.findAllByMarginGroupName(marginGroupName);
 
         getPropositionsAndSetMargin(eventId, margins);
 
@@ -150,7 +152,7 @@ public class EventSettingService {
 
     private void setMarginByMarketType(Event event, String marginGroupName) {
         try {
-            List<Margin> margins = marginDao.getMarginsByGroupName(marginGroupName);
+            List<Margin> margins = marginRepository.findAllByMarginGroupName(marginGroupName);
             String[] orgSpread = gmmService.getOrgSpread(event.getEventId());
             JSONObject resultJsonObject = (JSONObject) jsonParser.parse(orgSpread[1]);
             JSONObject responseJSONObject = (JSONObject) resultJsonObject.get("Response");
@@ -241,7 +243,7 @@ public class EventSettingService {
             if (existing == null) {
                 Event newEvent = eventDao.save(eventFromEc);
                 setNewMatchSetting(newEvent);
-                processChildEvents(newEvent, true);
+                processChildEvents(newEvent, false);
                 return newEvent;
             } else {
                 eventFromEc.setCompetitionGroupSetting(existing.getCompetitionGroupSetting());
@@ -251,7 +253,6 @@ public class EventSettingService {
             }
 
         }).map(event -> {
-            System.out.println(event);
             event.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(event));
             event.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(event));
             return event;
@@ -262,19 +263,15 @@ public class EventSettingService {
 
     public void processChildEvents(Event parentEvent, Boolean isNewMatch) {
 
-        try {
-            TimeUnit.SECONDS.sleep(10);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        gmmService.getChildEvent(parentEvent.getEventId()).stream().forEach(child -> {
-
+        if (isNewMatch) {
             try {
-                TimeUnit.SECONDS.sleep(5);
+                TimeUnit.SECONDS.sleep(60);
             } catch (InterruptedException ex) {
                 Logger.getLogger(EventSettingService.class.getName()).log(Level.SEVERE, null, ex);
             }
+        }
+
+        gmmService.getChildEvent(parentEvent.getEventId()).stream().forEach(child -> {
 
             Event newChildEvent = new Event();
             newChildEvent.setEventId(child.getEventID().toString());
@@ -293,10 +290,7 @@ public class EventSettingService {
                 }
             }
 
-            if (isNewMatch) {
-                setNewMatchSetting(newChildEvent);
-            }
-
+            setNewMatchSetting(newChildEvent);
             newChildEvent.setKickoffTimeMinusTodayScheduledTask(setKickoffTimeMinusTodayScheduledTask(newChildEvent));
             newChildEvent.setKickoffTimeScheduledTask(setKickoffTimeScheduledTask(newChildEvent));
             ScheduledEventsStorage.get().add(newChildEvent);

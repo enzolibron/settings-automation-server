@@ -9,8 +9,10 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -34,18 +36,26 @@ public class ScheduledJobs {
     //every hour
     @Scheduled(fixedDelay = 1000 * 60 * 60)
     public void deleteEventsThatArePast24HrsFromTheirKickoff() {
+        Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "deleteEventsThatArePast24HrsFromTheirKickoff running");
 
         //delete event in ScheduledEventStorage
-        ScheduledEventsStorage.get().getEvents().stream().forEach(event -> {
+        List<Event> newScheduledEvents = ScheduledEventsStorage.get().getEvents().stream().filter(event -> {
+            Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, event.toString());
             try {
                 if (isDatePast24Hrs(DateUtil.add12HoursToDate(formatter.parse(event.getEventDate())))) {
                     Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "Removing event from ScheduledEventStorage: {0}", event);
-                    ScheduledEventsStorage.get().remove(event);
+                    return false;
+                } else {
+                    return true;
                 }
             } catch (ParseException ex) {
                 Logger.getLogger(ScheduledJobs.class.getName()).log(Level.SEVERE, null, ex);
+                return false;
             }
-        });
+
+        }).collect(Collectors.toList());
+
+        ScheduledEventsStorage.get().setEvents(newScheduledEvents);
 
         //delete event in event DB
         eventDao.getAll().stream().forEach((Event event) -> {
@@ -61,6 +71,8 @@ public class ScheduledJobs {
             }
         });
 
+        Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "ScheduledEventsStorage Size: {0}", ScheduledEventsStorage.get().getEvents().size());
+        Logger.getLogger(ScheduledJobs.class.getName()).log(Level.INFO, "Events in DB Size: {0}", eventDao.getAll().size());
     }
 
     public boolean isDatePast24Hrs(Date aDate) {

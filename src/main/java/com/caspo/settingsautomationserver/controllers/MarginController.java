@@ -37,7 +37,7 @@ public class MarginController {
 
         return new ResponseEntity(result, HttpStatus.OK);
     }
-    
+
     @GetMapping
     public ResponseEntity getAll() {
         return new ResponseEntity(marginDao.getAllMargins(), HttpStatus.OK);
@@ -46,6 +46,11 @@ public class MarginController {
     @GetMapping("/{name}")
     public ResponseEntity getByGroupName(@PathVariable String name) {
         return new ResponseEntity(marginDao.getMarginsByGroupName(name), HttpStatus.OK);
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity getByProp(@RequestBody MarginDto request) {
+        return new ResponseEntity(marginDao.getAllMarginsByProp(request.getMarginGroupName(), request.getSportId(), request.getBetTypeName(), request.getBetTypeId(), request.getMarketTypeId(), request.getIsRbMarket()), HttpStatus.OK);
     }
 
     @DeleteMapping("/{name}")
@@ -63,9 +68,9 @@ public class MarginController {
     public ResponseEntity updateByBatch(@RequestBody List<MarginDto> request) {
         List<Margin> requestEntityList = request.stream()
                 .map(item -> item.dtoToEntity()).collect(Collectors.toList());
-        
+
         List<Margin> result = marginDao.update(requestEntityList);
-        
+
         return new ResponseEntity(result, HttpStatus.OK);
     }
 

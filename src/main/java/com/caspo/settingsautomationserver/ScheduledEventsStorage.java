@@ -1,8 +1,11 @@
 package com.caspo.settingsautomationserver;
 
 import com.caspo.settingsautomationserver.models.Event;
+import com.caspo.settingsautomationserver.scheduled.ScheduledJobs;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -12,7 +15,7 @@ public class ScheduledEventsStorage {
 
     private static ScheduledEventsStorage eventStorage_instance = null;
 
-    private final List<Event> events;
+    private List<Event> events;
 
     private ScheduledEventsStorage() {
         events = new ArrayList();
@@ -51,6 +54,11 @@ public class ScheduledEventsStorage {
     }
     
     public List<Event> getEvents() {
+        return events;
+    }
+    
+    public List<Event> setEvents(List<Event> newEvents) {
+        events = newEvents;
         return events;
     }
 

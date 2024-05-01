@@ -11,10 +11,13 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface MarginRepository extends JpaRepository<Margin, Long> {
-    
+
     List<Margin> findAllByMarginGroupName(String groupName);
-    
+
     void deleteAllByMarginGroupName(String groupName);
-    
+
     List<Margin> findAllByOrderByMarginGroupNameAsc();
+
+    List<Margin> findAllByMarginGroupNameOrSportIdOrBetTypeNameOrBetTypeIdOrMarketTypeIdOrIsRbMarketOrderByMarginGroupNameAsc(String marginGroupName, Integer sportId, String betTypeName, Integer betTypeId, Integer marketTypeId, Integer isRbMarket);
+    
 }
